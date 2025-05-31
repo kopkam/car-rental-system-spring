@@ -3,17 +3,31 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Car Rental - Dashboard</title>
+    <title th:text="#{app.title}">Car Rental - Dashboard</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
 <body>
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
     <div class="container">
-        <a class="navbar-brand" href="/dashboard">Car Rental</a>
+        <a class="navbar-brand" href="/dashboard" th:text="#{app.title}">Car Rental</a>
         <div class="navbar-nav ms-auto">
-            <span class="navbar-text me-3">Welcome, <span th:text="${username}">User</span>!</span>
+            <!-- Language Toggle -->
+            <div class="dropdown me-3">
+                <button class="btn btn-outline-light dropdown-toggle" type="button" id="languageDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="fas fa-globe"></i> <span th:text="#{dashboard.language}">Language</span>
+                </button>
+                <ul class="dropdown-menu" aria-labelledby="languageDropdown">
+                    <li><a class="dropdown-item" href="?lang=en">🇺🇸 English</a></li>
+                    <li><a class="dropdown-item" href="?lang=pl">🇵🇱 Polski</a></li>
+                </ul>
+            </div>
+
+            <span class="navbar-text me-3">
+                <span th:text="#{dashboard.welcome}">Welcome</span>, <span th:text="${username}">User</span>!
+            </span>
             <form th:action="@{/logout}" method="post" style="display: inline;">
-                <button type="submit" class="btn btn-outline-light">Logout</button>
+                <button type="submit" class="btn btn-outline-light" th:text="#{nav.logout}">Logout</button>
             </form>
         </div>
     </div>
@@ -22,23 +36,22 @@
 <div class="container mt-4">
     <div class="row">
         <div class="col-md-12">
-            <h1>Dashboard</h1>
+            <h1 th:text="#{dashboard.title}">Dashboard</h1>
 
             <div class="alert alert-success">
-                <h4>Login Successful! 🎉</h4>
-                <p>You are now logged in to the Car Rental System.</p>
+                <h4><span th:text="#{login.success.title}">Login Successful!</span> 🎉</h4>
+                <p th:text="#{login.success.message}">You are now logged in to the Car Rental System.</p>
             </div>
 
             <div class="card">
                 <div class="card-header">
-                    <h5>User Information</h5>
+                    <h5 th:text="#{dashboard.user.info}">User Information</h5>
                 </div>
-
                 <div class="card-body">
-                    <p><strong>Username:</strong> <span th:text="${username}">admin</span></p>
-                    <p><strong>Full Name:</strong> <span th:text="${fullName}">John Doe</span></p>
-                    <p><strong>Email:</strong> <span th:text="${email}">user@example.com</span></p>
-                    <p><strong>Roles:</strong>
+                    <p><strong th:text="#{dashboard.username}">Username</strong>: <span th:text="${username}">admin</span></p>
+                    <p><strong th:text="#{dashboard.fullname}">Full Name</strong>: <span th:text="${fullName}">John Doe</span></p>
+                    <p><strong th:text="#{dashboard.email}">Email</strong>: <span th:text="${email}">user@example.com</span></p>
+                    <p><strong th:text="#{dashboard.roles}">Roles</strong>:
                         <span class="badge bg-primary me-1" th:text="${userRoles}">CUSTOMER</span>
                     </p>
                 </div>
@@ -48,27 +61,27 @@
                 <div class="col-md-4">
                     <div class="card">
                         <div class="card-body text-center">
-                            <h5 class="card-title">Cars</h5>
-                            <p class="card-text">Manage vehicle inventory</p>
-                            <a href="/cars" class="btn btn-primary">View Cars</a>
+                            <h5 class="card-title" th:text="#{dashboard.cars.title}">Cars</h5>
+                            <p class="card-text" th:text="#{dashboard.cars.desc}">Manage vehicle inventory</p>
+                            <a href="/cars" class="btn btn-primary" th:text="#{dashboard.cars.button}">View Cars</a>
                         </div>
                     </div>
                 </div>
                 <div class="col-md-4">
                     <div class="card">
                         <div class="card-body text-center">
-                            <h5 class="card-title">Reservations</h5>
-                            <p class="card-text">Manage bookings</p>
-                            <a href="/reservations" class="btn btn-primary">View Reservations</a>
+                            <h5 class="card-title" th:text="#{dashboard.reservations.title}">Reservations</h5>
+                            <p class="card-text" th:text="#{dashboard.reservations.desc}">Manage bookings</p>
+                            <a href="/reservations" class="btn btn-primary" th:text="#{dashboard.reservations.button}">View Reservations</a>
                         </div>
                     </div>
                 </div>
                 <div class="col-md-4">
                     <div class="card">
                         <div class="card-body text-center">
-                            <h5 class="card-title">Users</h5>
-                            <p class="card-text">Manage users</p>
-                            <a href="/users" class="btn btn-primary">View Users</a>
+                            <h5 class="card-title" th:text="#{dashboard.users.title}">Users</h5>
+                            <p class="card-text" th:text="#{dashboard.users.desc}">Manage users</p>
+                            <a href="/users" class="btn btn-primary" th:text="#{dashboard.users.button}">View Users</a>
                         </div>
                     </div>
                 </div>
