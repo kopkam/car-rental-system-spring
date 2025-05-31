@@ -1,0 +1,8 @@
+Manifest-Version: 1.0
+Created-By: IntelliJ IDEA
+Built-By: marci
+Build-Jdk: Oracle OpenJDK 23.0.2
+Implementation-Version: 1.0.0
+Implementation-Vendor-Id: com.transport
+Main-Class: ${start-class}
+
