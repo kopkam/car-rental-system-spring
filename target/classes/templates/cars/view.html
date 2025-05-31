@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Car Rental - Car Details</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container">
+        <a class="navbar-brand" href="/dashboard">Car Rental</a>
+        <div class="navbar-nav ms-auto">
+            <a class="nav-link" href="/cars">Back to Cars</a>
+            <a class="btn btn-outline-light" href="/logout">Logout</a>
+        </div>
+    </div>
+</nav>
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h3><i class="bi bi-car-front"></i> <span th:text="${car.brand + ' ' + car.model}">Toyota Camry</span></h3>
+                    <span class="badge fs-6" th:classappend="${car.status.name() == 'AVAILABLE' ? 'bg-success' :
+                                                                 car.status.name() == 'RENTED' ? 'bg-warning' : 'bg-danger'}"
+                          th:text="${car.status}">AVAILABLE</span>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tbody>
+                                <tr>
+                                    <td><strong>Brand:</strong></td>
+                                    <td th:text="${car.brand}">Toyota</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Model:</strong></td>
+                                    <td th:text="${car.model}">Camry</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Year:</strong></td>
+                                    <td th:text="${car.year}">2022</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>License Plate:</strong></td>
+                                    <td><code th:text="${car.licensePlate}">ABC-123</code></td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tbody>
+                                <tr>
+                                    <td><strong>Daily Rate:</strong></td>
+                                    <td class="text-success fw-bold">$<span th:text="${car.dailyRate}">50.00</span></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Status:</strong></td>
+                                    <td>
+                                                <span class="badge" th:classappend="${car.status.name() == 'AVAILABLE' ? 'bg-success' :
+                                                                                     car.status.name() == 'RENTED' ? 'bg-warning' : 'bg-danger'}"
+                                                      th:text="${car.status}">AVAILABLE</span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Added:</strong></td>
+                                    <td th:text="${#temporals.format(car.createdAt, 'dd/MM/yyyy HH:mm')}">01/01/2024 10:00</td>
+                                </tr>
+                                <tr th:if="${car.updatedAt != car.createdAt}">
+                                    <td><strong>Updated:</strong></td>
+                                    <td th:text="${#temporals.format(car.updatedAt, 'dd/MM/yyyy HH:mm')}">02/01/2024 15:30</td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div th:if="${car.description}" class="mt-3">
+                        <h5>Description:</h5>
+                        <p class="text-muted" th:text="${car.description}">Car description here...</p>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <div class="d-flex justify-content-between">
+                        <a href="/cars" class="btn btn-secondary">
+                            <i class="bi bi-arrow-left"></i> Back to Cars
+                        </a>
+                        <div sec:authorize="hasAnyRole('ADMIN', 'MANAGER')">
+                            <a th:href="@{/cars/edit/{id}(id=${car.id})}" class="btn btn-primary me-2">
+                                <i class="bi bi-pencil"></i> Edit Car
+                            </a>
+                            <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">
+                                <i class="bi bi-trash"></i> Delete Car
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Modal -->
+<div sec:authorize="hasAnyRole('ADMIN', 'MANAGER')" class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirm Delete</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                Are you sure you want to delete <strong th:text="${car.brand + ' ' + car.model}">this car</strong>?
+                This action cannot be undone.
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form th:action="@{/cars/delete/{id}(id=${car.id})}" method="post" style="display: inline;">
+                    <button type="submit" class="btn btn-danger">Delete</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

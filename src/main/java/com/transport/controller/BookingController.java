@@ -50,7 +50,7 @@ public class BookingController {
 
     @GetMapping("/new")
     public String showBookingForm(Model model) {
-        List<Car> availableCars = carService.findByStatus(Car.Status.AVAILABLE);
+        List<Car> availableCars = carService.getCarsByStatus(Car.Status.AVAILABLE);
         model.addAttribute("cars", availableCars);
         model.addAttribute("booking", new Booking());
         return "booking-form";
