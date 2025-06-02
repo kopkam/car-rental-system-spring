@@ -1,95 +1,567 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title th:text="#{app.title}">Car Rental - Dashboard</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --accent-color: #e74c3c;
+            --success-color: #27ae60;
+            --warning-color: #f39c12;
+            --info-color: #8e44ad;
+            --background-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        body {
+            background: var(--background-gradient);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .navbar {
+            background: rgba(44, 62, 80, 0.95) !important;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 2px 20px rgba(0,0,0,0.1);
+        }
+
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 1.5rem;
+            color: #fff !important;
+        }
+
+        .main-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            margin-top: 2rem;
+            padding: 2rem;
+        }
+
+        .welcome-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 15px;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .welcome-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 100px;
+            height: 100px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 50%;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .welcome-header::after {
+            content: '';
+            position: absolute;
+            bottom: -30%;
+            left: -10%;
+            width: 80px;
+            height: 80px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 50%;
+            animation: float 8s ease-in-out infinite reverse;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(180deg); }
+        }
+
+        .welcome-header h1 {
+            font-weight: 700;
+            margin: 0;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            position: relative;
+            z-index: 2;
+        }
+
+        .welcome-text {
+            opacity: 0.9;
+            font-size: 1.1rem;
+            position: relative;
+            z-index: 2;
+        }
+
+        .success-banner {
+            background: linear-gradient(135deg, var(--success-color), #229954);
+            color: white;
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            border: none;
+            box-shadow: 0 5px 15px rgba(39, 174, 96, 0.3);
+        }
+
+        .user-info-card {
+            background: white;
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+            border-left: 4px solid var(--secondary-color);
+            position: relative;
+        }
+
+        .user-info-icon {
+            position: absolute;
+            top: 2rem;
+            right: 2rem;
+            font-size: 3rem;
+            color: rgba(52, 152, 219, 0.1);
+        }
+
+        .info-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding: 0.5rem 0;
+        }
+
+        .info-item i {
+            width: 25px;
+            margin-right: 15px;
+            color: var(--secondary-color);
+        }
+
+        .info-label {
+            font-weight: 600;
+            color: var(--primary-color);
+            min-width: 180px;
+            flex-shrink: 0;
+        }
+
+        .info-value {
+            color: #6c757d;
+        }
+
+        .role-badge {
+            background: linear-gradient(135deg, var(--info-color), #6a3093);
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            box-shadow: 0 2px 10px rgba(142, 68, 173, 0.3);
+        }
+
+        .action-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .action-card {
+            background: white;
+            border-radius: 20px;
+            padding: 2rem;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            border: none;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .action-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--gradient);
+        }
+
+        .action-card.cars::before {
+            background: linear-gradient(135deg, var(--secondary-color), #2980b9);
+        }
+
+        .action-card.reservations::before {
+            background: linear-gradient(135deg, var(--warning-color), #d68910);
+        }
+
+        .action-card.users::before {
+            background: linear-gradient(135deg, var(--info-color), #6a3093);
+        }
+
+        .action-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+        }
+
+        .card-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, var(--secondary-color), #2980b9);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            display: block;
+        }
+
+        .action-card.cars .card-icon {
+            background: none;
+            -webkit-background-clip: unset;
+            -webkit-text-fill-color: unset;
+            background-clip: unset;
+            color: var(--secondary-color);
+        }
+
+        .action-card.reservations .card-icon {
+            background: none;
+            -webkit-background-clip: unset;
+            -webkit-text-fill-color: unset;
+            background-clip: unset;
+            color: var(--warning-color);
+        }
+
+        .action-card.users .card-icon {
+            background: none;
+            -webkit-background-clip: unset;
+            -webkit-text-fill-color: unset;
+            background-clip: unset;
+            color: var(--info-color);
+        }
+
+        .card-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+        }
+
+        .card-description {
+            color: #6c757d;
+            margin-bottom: 2rem;
+            line-height: 1.6;
+        }
+
+        .action-btn {
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-weight: 600;
+            border: none;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-cars {
+            background: linear-gradient(135deg, var(--secondary-color), #2980b9);
+            color: white;
+            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.3);
+        }
+
+        .btn-cars:hover {
+            background: linear-gradient(135deg, #2980b9, #1c5a7e);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(52, 152, 219, 0.4);
+        }
+
+        .btn-reservations {
+            background: linear-gradient(135deg, var(--warning-color), #d68910);
+            color: white;
+            box-shadow: 0 5px 15px rgba(243, 156, 18, 0.3);
+        }
+
+        .btn-reservations:hover {
+            background: linear-gradient(135deg, #d68910, #b7750c);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(243, 156, 18, 0.4);
+        }
+
+        .btn-users {
+            background: linear-gradient(135deg, var(--info-color), #6a3093);
+            color: white;
+            box-shadow: 0 5px 15px rgba(142, 68, 173, 0.3);
+        }
+
+        .btn-users:hover {
+            background: linear-gradient(135deg, #6a3093, #4a1c5a);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(142, 68, 173, 0.4);
+        }
+
+        .language-float {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            z-index: 1000;
+        }
+
+        .language-toggle {
+            background: linear-gradient(135deg, var(--secondary-color), #2980b9);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            padding: 15px 20px;
+            font-weight: 600;
+            box-shadow: 0 8px 25px rgba(52, 152, 219, 0.3);
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .language-toggle:hover {
+            background: linear-gradient(135deg, #2980b9, #1c5a7e);
+            color: white;
+            transform: translateY(-3px);
+            box-shadow: 0 12px 35px rgba(52, 152, 219, 0.4);
+        }
+
+        .language-float .dropdown-menu {
+            border-radius: 15px;
+            border: none;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            backdrop-filter: blur(10px);
+            background: rgba(255,255,255,0.95);
+            bottom: 100%;
+            top: auto;
+            margin-bottom: 10px;
+        }
+
+        .language-float .dropdown-item {
+            border-radius: 10px;
+            margin: 5px;
+            transition: all 0.3s ease;
+            padding: 10px 15px;
+        }
+
+        .language-float .dropdown-item:hover {
+            background: var(--secondary-color);
+            color: white;
+            transform: translateX(5px);
+        }
+
+        @media (max-width: 768px) {
+            .main-container {
+                margin: 1rem;
+                padding: 1rem;
+            }
+
+            .action-cards {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+
+            .welcome-header {
+                text-align: center;
+            }
+
+            .user-info-icon {
+                display: none;
+            }
+
+            .language-float {
+                bottom: 20px;
+                right: 20px;
+            }
+
+            .language-toggle {
+                padding: 12px 16px;
+                font-size: 0.9rem;
+            }
+        }
+
+        .ripple {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(0);
+            animation: ripple-animation 0.6s linear;
+            pointer-events: none;
+        }
+
+        @keyframes ripple-animation {
+            to {
+                transform: scale(4);
+                opacity: 0;
+            }
+        }
+    </style>
 </head>
 <body>
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+<nav class="navbar navbar-expand-lg navbar-dark">
     <div class="container">
-        <a class="navbar-brand" href="/dashboard" th:text="#{app.title}">Car Rental</a>
+        <a class="navbar-brand" href="/dashboard">
+            <i class="bi bi-car-front-fill me-2"></i><span th:text="#{app.title}">Car Rental Pro</span>
+        </a>
         <div class="navbar-nav ms-auto">
-            <!-- Language Toggle -->
-            <div class="dropdown me-3">
-                <button class="btn btn-outline-light dropdown-toggle" type="button" id="languageDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                    <i class="fas fa-globe"></i> <span th:text="#{dashboard.language}">Language</span>
-                </button>
-                <ul class="dropdown-menu" aria-labelledby="languageDropdown">
-                    <li><a class="dropdown-item" href="?lang=en">🇺🇸 English</a></li>
-                    <li><a class="dropdown-item" href="?lang=pl">🇵🇱 Polski</a></li>
-                </ul>
-            </div>
-
             <span class="navbar-text me-3">
-                <span th:text="#{dashboard.welcome}">Welcome</span>, <span th:text="${username}">User</span>!
+                <i class="bi bi-person-circle me-1"></i><span th:text="#{dashboard.welcome}">Welcome</span> <span th:text="${username}">User</span>!
             </span>
             <form th:action="@{/logout}" method="post" style="display: inline;">
-                <button type="submit" class="btn btn-outline-light" th:text="#{nav.logout}">Logout</button>
+                <button type="submit" class="btn btn-outline-light">
+                    <i class="bi bi-box-arrow-right me-1"></i><span th:text="#{nav.logout}">Logout</span>
+                </button>
             </form>
         </div>
     </div>
 </nav>
 
-<div class="container mt-4">
-    <div class="row">
-        <div class="col-md-12">
-            <h1 th:text="#{dashboard.title}">Dashboard</h1>
+<div class="container">
+    <div class="main-container">
+        <!-- Welcome Header -->
+        <div class="welcome-header">
+            <h1><i class="bi bi-speedometer2 me-3"></i><span th:text="#{dashboard.title}">Dashboard</span></h1>
+            <p class="welcome-text mb-0">
+                <span th:text="#{dashboard.welcome}">Welcome</span> <strong th:text="${username}">User</strong>!
+                Manage your car rental business with ease.
+            </p>
+        </div>
 
-            <div class="alert alert-success">
-                <h4><span th:text="#{login.success.title}">Login Successful!</span> 🎉</h4>
-                <p th:text="#{login.success.message}">You are now logged in to the Car Rental System.</p>
-            </div>
-
-            <div class="card">
-                <div class="card-header">
-                    <h5 th:text="#{dashboard.user.info}">User Information</h5>
-                </div>
-                <div class="card-body">
-                    <p><strong th:text="#{dashboard.username}">Username</strong>: <span th:text="${username}">admin</span></p>
-                    <p><strong th:text="#{dashboard.fullname}">Full Name</strong>: <span th:text="${fullName}">John Doe</span></p>
-                    <p><strong th:text="#{dashboard.email}">Email</strong>: <span th:text="${email}">user@example.com</span></p>
-                    <p><strong th:text="#{dashboard.roles}">Roles</strong>:
-                        <span class="badge bg-primary me-1" th:text="${userRoles}">CUSTOMER</span>
-                    </p>
+        <!-- Success Banner -->
+        <div class="alert success-banner border-0">
+            <div class="d-flex align-items-center">
+                <i class="bi bi-check-circle-fill me-3 fs-3"></i>
+                <div>
+                    <h4 class="mb-1"><span th:text="#{login.success.title}">Login Successful!</span> 🎉</h4>
+                    <p class="mb-0 opacity-90" th:text="#{login.success.message}">You are now logged in to the Car Rental System.</p>
                 </div>
             </div>
+        </div>
 
-            <div class="row mt-4">
-                <div class="col-md-4">
-                    <div class="card">
-                        <div class="card-body text-center">
-                            <h5 class="card-title" th:text="#{dashboard.cars.title}">Cars</h5>
-                            <p class="card-text" th:text="#{dashboard.cars.desc}">Manage vehicle inventory</p>
-                            <a href="/cars" class="btn btn-primary" th:text="#{dashboard.cars.button}">View Cars</a>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="card">
-                        <div class="card-body text-center">
-                            <h5 class="card-title" th:text="#{dashboard.reservations.title}">Reservations</h5>
-                            <p class="card-text" th:text="#{dashboard.reservations.desc}">Manage bookings</p>
-                            <a href="/reservations" class="btn btn-primary" th:text="#{dashboard.reservations.button}">View Reservations</a>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="card">
-                        <div class="card-body text-center">
-                            <h5 class="card-title" th:text="#{dashboard.users.title}">Users</h5>
-                            <p class="card-text" th:text="#{dashboard.users.desc}">Manage users</p>
-                            <a href="/users" class="btn btn-primary" th:text="#{dashboard.users.button}">View Users</a>
-                        </div>
-                    </div>
-                </div>
+        <!-- User Information Card -->
+        <div class="user-info-card">
+            <i class="bi bi-person-circle user-info-icon"></i>
+            <h5 class="mb-4"><i class="bi bi-info-circle me-2"></i><span th:text="#{dashboard.user.info}">User Information</span></h5>
+
+            <div class="info-item">
+                <i class="bi bi-person"></i>
+                <span class="info-label" th:text="#{dashboard.username}">Username:</span>
+                <span class="info-value" th:text="${username}">admin</span>
+            </div>
+
+            <div class="info-item">
+                <i class="bi bi-card-text"></i>
+                <span class="info-label" th:text="#{dashboard.fullname}">Full Name:</span>
+                <span class="info-value" th:text="${fullName}">John Doe</span>
+            </div>
+
+            <div class="info-item">
+                <i class="bi bi-envelope"></i>
+                <span class="info-label" th:text="#{dashboard.email}">Email:</span>
+                <span class="info-value" th:text="${email}">user@example.com</span>
+            </div>
+
+            <div class="info-item">
+                <i class="bi bi-shield-check"></i>
+                <span class="info-label" th:text="#{dashboard.roles}">Roles:</span>
+                <span class="role-badge" th:text="${userRoles}">CUSTOMER</span>
+            </div>
+        </div>
+
+        <!-- Action Cards -->
+        <div class="action-cards">
+            <!-- Cars Card -->
+            <div class="action-card cars">
+                <i class="bi bi-truck card-icon"></i>
+                <h5 class="card-title" th:text="#{dashboard.cars.title}">Cars</h5>
+                <p class="card-description" th:text="#{dashboard.cars.desc}">Manage vehicle inventory and fleet operations</p>
+                <a href="/cars" class="action-btn btn-cars">
+                    <i class="bi bi-arrow-right me-2"></i><span th:text="#{dashboard.cars.button}">View Cars</span>
+                </a>
+            </div>
+
+            <!-- Reservations Card -->
+            <div class="action-card reservations">
+                <i class="bi bi-calendar-check-fill card-icon"></i>
+                <h5 class="card-title" th:text="#{dashboard.reservations.title}">Reservations</h5>
+                <p class="card-description" th:text="#{dashboard.reservations.desc}">Manage bookings and rental schedules</p>
+                <a href="/reservations" class="action-btn btn-reservations">
+                    <i class="bi bi-arrow-right me-2"></i><span th:text="#{dashboard.reservations.button}">View Reservations</span>
+                </a>
+            </div>
+
+            <!-- Users Card -->
+            <div class="action-card users">
+                <i class="bi bi-people-fill card-icon"></i>
+                <h5 class="card-title" th:text="#{dashboard.users.title}">Users</h5>
+                <p class="card-description" th:text="#{dashboard.users.desc}">Manage users and access permissions</p>
+                <a href="/users" class="action-btn btn-users">
+                    <i class="bi bi-arrow-right me-2"></i><span th:text="#{dashboard.users.button}">View Users</span>
+                </a>
             </div>
         </div>
     </div>
 </div>
 
+<!-- Floating Language Toggle -->
+<div class="language-float">
+    <div class="dropdown dropup">
+        <button class="language-toggle dropdown-toggle" type="button" id="languageDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="bi bi-globe"></i>
+            <span th:text="#{dashboard.language}">Language</span>
+        </button>
+        <ul class="dropdown-menu" aria-labelledby="languageDropdown">
+            <li><a class="dropdown-item" href="?lang=en">🇺🇸 English</a></li>
+            <li><a class="dropdown-item" href="?lang=pl">🇵🇱 Polski</a></li>
+        </ul>
+    </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Animate cards on load
+        const cards = document.querySelectorAll('.action-card, .user-info-card');
+        cards.forEach((card, index) => {
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(30px)';
+            card.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+
+            setTimeout(() => {
+                card.style.opacity = '1';
+                card.style.transform = 'translateY(0)';
+            }, index * 200);
+        });
+
+        // Add ripple effect to buttons
+        document.querySelectorAll('.action-btn').forEach(button => {
+            button.addEventListener('click', function(e) {
+                const ripple = document.createElement('span');
+                const rect = this.getBoundingClientRect();
+                const size = Math.max(rect.width, rect.height);
+                const x = e.clientX - rect.left - size / 2;
+                const y = e.clientY - rect.top - size / 2;
+
+                ripple.style.width = ripple.style.height = size + 'px';
+                ripple.style.left = x + 'px';
+                ripple.style.top = y + 'px';
+                ripple.classList.add('ripple');
+
+                this.style.position = 'relative';
+                this.style.overflow = 'hidden';
+                this.appendChild(ripple);
+
+                setTimeout(() => {
+                    ripple.remove();
+                }, 600);
+            });
+        });
+    });
+</script>
 </body>
 </html>
