@@ -75,25 +75,25 @@
                     <p class="card-text">
                         <strong>Year:</strong> <span th:text="${car.year}">2022</span><br>
                         <strong>License:</strong> <span th:text="${car.licensePlate}">ABC-123</span><br>
-                        <strong>Daily Rate:</strong> $<span th:text="${car.dailyRate}">50.00</span>
+                        <strong>Daily Rate:</strong> <span th:text="${car.dailyRate}">50.00</span> PLN
                     </p>
                 </div>
                 <div class="card-footer">
-                    <div class="btn-group w-100" role="group">
-                        <a th:href="@{/cars/view/{id}(id=${car.id})}" class="btn btn-outline-primary btn-sm">
-                            <i class="bi bi-eye"></i> View
+                <div class="btn-group w-100" role="group">
+                    <a th:href="@{/cars/view/{id}(id=${car.id})}" class="btn btn-outline-primary btn-sm">
+                        <i class="bi bi-eye"></i> View
+                    </a>
+                    <div sec:authorize="hasAnyRole('ADMIN', 'MANAGER')">
+                        <a th:href="@{/cars/edit/{id}(id=${car.id})}" class="btn btn-outline-secondary btn-sm">
+                            <i class="bi bi-pencil"></i> Edit
                         </a>
-                        <div sec:authorize="hasAnyRole('ADMIN', 'MANAGER')">
-                            <a th:href="@{/cars/edit/{id}(id=${car.id})}" class="btn btn-outline-secondary btn-sm">
-                                <i class="bi bi-pencil"></i> Edit
-                            </a>
-                            <button type="button" class="btn btn-outline-danger btn-sm"
-                                    data-bs-toggle="modal" th:data-bs-target="'#deleteModal' + ${car.id}">
-                                <i class="bi bi-trash"></i> Delete
-                            </button>
-                        </div>
+                        <button type="button" class="btn btn-outline-danger btn-sm"
+                                data-bs-toggle="modal" th:data-bs-target="'#deleteModal' + ${car.id}">
+                            <i class="bi bi-trash"></i> Delete
+                        </button>
                     </div>
                 </div>
+            </div>
             </div>
 
             <!-- Delete Modal -->

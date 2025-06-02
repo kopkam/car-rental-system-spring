@@ -64,7 +64,7 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label for="dailyRate" class="form-label">Daily Rate ($) *</label>
+                                    <label for="dailyRate" class="form-label">Daily Rate (PLN) *</label>
                                     <input type="number" class="form-control" th:field="*{dailyRate}" step="0.01" min="0" required>
                                     <div th:if="${#fields.hasErrors('dailyRate')}" class="text-danger" th:errors="*{dailyRate}"></div>
                                 </div>
@@ -84,12 +84,12 @@
                             </div>
                         </div>
 
-                        <div class="mb-3">
-                            <label for="description" class="form-label">Description</label>
-                            <textarea class="form-control" th:field="*{description}" rows="3"
-                                      placeholder="Optional description of the car..."></textarea>
-                            <div th:if="${#fields.hasErrors('description')}" class="text-danger" th:errors="*{description}"></div>
-                        </div>
+                        <!--                        <div class="mb-3">
+                                                    <label for="description" class="form-label">Description</label>
+                                                    <textarea class="form-control" th:field="*{description}" rows="3"
+                                                              placeholder="Optional description of the car..."></textarea>
+                                                    <div th:if="${#fields.hasErrors('description')}" class="text-danger" th:errors="*{description}"></div>
+                                                </div>-->
 
                         <div class="d-flex justify-content-between">
                             <a th:href="@{/cars/view/{id}(id=${car.id})}" class="btn btn-secondary">

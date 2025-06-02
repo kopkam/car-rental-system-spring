@@ -2,6 +2,7 @@ package com.transport.entity;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Future;
+import jakarta.validation.constraints.FutureOrPresent;
 import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -27,7 +28,7 @@ public class Booking {
     private User manager;
 
     @NotNull(message = "Start date is required")
-    @Future(message = "Start date must be in the future")
+    @FutureOrPresent(message = "Start date must be in the future")
     @Column(name = "start_date")
     private LocalDate startDate;
 
@@ -46,6 +47,15 @@ public class Booking {
 
     @Column(name = "payment_deadline")
     private LocalDateTime paymentDeadline;
+
+    @Column(name = "pickup_location")
+    private String pickupLocation;
+
+    @Column(name = "dropoff_location")
+    private String dropoffLocation;
+
+    @Column(name = "special_requests", columnDefinition = "TEXT")
+    private String specialRequests;
 
     @OneToOne(mappedBy = "booking", cascade = CascadeType.ALL)
     private Invoice invoice;
@@ -98,4 +108,13 @@ public class Booking {
 
     public Invoice getInvoice() { return invoice; }
     public void setInvoice(Invoice invoice) { this.invoice = invoice; }
+
+    public String getPickupLocation() { return pickupLocation; }
+    public void setPickupLocation(String pickupLocation) { this.pickupLocation = pickupLocation; }
+
+    public String getDropoffLocation() { return dropoffLocation; }
+    public void setDropoffLocation(String dropoffLocation) { this.dropoffLocation = dropoffLocation; }
+
+    public String getSpecialRequests() { return specialRequests; }
+    public void setSpecialRequests(String specialRequests) { this.specialRequests = specialRequests; }
 }

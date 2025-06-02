@@ -51,7 +51,7 @@
                         <td th:text="${booking.customer.firstName + ' ' + booking.customer.lastName}"></td>
                         <td th:text="${booking.startDate}"></td>
                         <td th:text="${booking.endDate}"></td>
-                        <td th:text="' + ${booking.totalAmount}"></td>
+                        <td th:text="${booking.totalAmount} + ' zł'"></td>
                         <td>
                                     <span th:text="${booking.status}"
                                           th:class="${booking.status.name() == 'CONFIRMED' ? 'badge bg-success' :
@@ -75,6 +75,7 @@
 
                                 <a th:if="${booking.status.name() == 'PAID' and booking.invoice != null}"
                                    th:href="@{/bookings/{id}/invoice(id=${booking.id})}"
+                                   target="_blank"
                                    class="btn btn-sm btn-info" th:text="#{booking.invoice}">Invoice</a>
                             </div>
                         </td>

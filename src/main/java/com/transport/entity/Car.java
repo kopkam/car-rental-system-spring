@@ -6,6 +6,8 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import java.math.BigDecimal;
 import java.util.Set;
+import java.time.LocalDateTime;
+
 
 @Entity
 @Table(name = "cars")
@@ -34,6 +36,9 @@ public class Car {
 
     @Enumerated(EnumType.STRING)
     private Status status = Status.AVAILABLE;
+
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
 
     @ManyToOne
     @JoinColumn(name = "manager_id")
@@ -84,4 +89,7 @@ public class Car {
 
     public Set<Booking> getBookings() { return bookings; }
     public void setBookings(Set<Booking> bookings) { this.bookings = bookings; }
+
+    public LocalDateTime getCreatedAt() { return createdAt;}
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt;}
 }

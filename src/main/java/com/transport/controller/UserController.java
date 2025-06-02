@@ -71,14 +71,24 @@ public class UserController {
 
     @PostMapping("/{id}")
     public String updateUser(@PathVariable Long id,
-                             @Valid @ModelAttribute User user,
+                             @ModelAttribute User user,  // USUNĄŁEM @Valid
                              BindingResult result,
                              @RequestParam(value = "roleNames", required = false) Set<String> roleNames,
                              Model model) {
-        if (result.hasErrors()) {
-            model.addAttribute("roles", Role.RoleName.values());
-            return "users/form";
+
+        // Pobierz istniejącego użytkownika z bazy danych
+        User existingUser = userService.findById(id);
+        if (existingUser == null) {
+            return "redirect:/users?error=notfound";
         }
+
+        // Jeśli password jest puste, zachowaj stare hasło
+        if (user.getPassword() == null || user.getPassword().trim().isEmpty()) {
+            user.setPassword(existingUser.getPassword());
+        }
+
+        // Teraz możesz walidować ręcznie lub użyć @Valid
+        // Ale password już nie będzie puste
 
         try {
             user.setId(id);

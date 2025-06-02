@@ -29,8 +29,46 @@ public class CarService {
         }
     }
 
+    // ✅ PROSTA METODA SAVE - używana przez BookingController
+    public Car save(Car car) {
+        return carRepository.save(car);
+    }
+
+    // ✅ METODA SAVE Z WALIDACJĄ - używana przy tworzeniu/edycji aut
+    @Transactional
+    public Car saveCar(Car car) {
+        try {
+            System.out.println("=== SAVING CAR ===");
+            System.out.println("Car: " + car);
+
+            // Check for duplicate license plate
+            if (car.getId() == null) { // New car
+                Car existingCar = carRepository.findByLicensePlate(car.getLicensePlate());
+                if (existingCar != null) {
+                    throw new RuntimeException("Car with license plate " + car.getLicensePlate() + " already exists");
+                }
+                // Set createdAt for new cars
+                car.setCreatedAt(LocalDateTime.now());
+            } else { // Updating existing car
+                Car existingCar = carRepository.findByLicensePlate(car.getLicensePlate());
+                if (existingCar != null && !existingCar.getId().equals(car.getId())) {
+                    throw new RuntimeException("Another car with license plate " + car.getLicensePlate() + " already exists");
+                }
+            }
+
+            Car savedCar = carRepository.save(car);
+            System.out.println("Car saved with ID: " + savedCar.getId());
+            return savedCar;
+
+        } catch (Exception e) {
+            System.err.println("Error saving car: " + e.getMessage());
+            e.printStackTrace();
+            throw e;
+        }
+    }
+
     public List<Car> getAvailableCars() {
-        return carRepository.findByStatus(Car.Status.AVAILABLE);  // ✅ POPRAWIONE
+        return carRepository.findByStatus(Car.Status.AVAILABLE);
     }
 
     public Car getCarById(Long id) {
@@ -51,38 +89,6 @@ public class CarService {
     }
 
     @Transactional
-    public Car saveCar(Car car) {
-        try {
-            System.out.println("=== SAVING CAR ===");
-            System.out.println("Car: " + car);
-
-            // Check for duplicate license plate
-            if (car.getId() == null) { // New car
-                Car existingCar = carRepository.findByLicensePlate(car.getLicensePlate());
-                if (existingCar != null) {
-                    throw new RuntimeException("Car with license plate " + car.getLicensePlate() + " already exists");
-                }
-            } else { // Updating existing car
-                Car existingCar = carRepository.findByLicensePlate(car.getLicensePlate());
-                if (existingCar != null && !existingCar.getId().equals(car.getId())) {
-                    throw new RuntimeException("Another car with license plate " + car.getLicensePlate() + " already exists");
-                }
-            }
-
-            // Note: Timestamps removed - add them to Car entity if needed
-
-            Car savedCar = carRepository.save(car);
-            System.out.println("Car saved with ID: " + savedCar.getId());
-            return savedCar;
-
-        } catch (Exception e) {
-            System.err.println("Error saving car: " + e.getMessage());
-            e.printStackTrace();
-            throw e;
-        }
-    }
-
-    @Transactional
     public void deleteCar(Long id) {
         try {
             System.out.println("=== DELETING CAR ===");
@@ -93,7 +99,7 @@ public class CarService {
                 throw new RuntimeException("Car not found with ID: " + id);
             }
 
-            // Check if car has active bookings (using the existing bookings field)
+            // Check if car has active bookings
             if (car.getBookings() != null && !car.getBookings().isEmpty()) {
                 long activeBookings = car.getBookings().stream()
                         .filter(booking -> booking.getStatus() != null &&
@@ -123,7 +129,7 @@ public class CarService {
         return carRepository.findByModelIgnoreCase(model);
     }
 
-    public List<Car> findByPriceRange(BigDecimal minPrice, BigDecimal maxPrice) {  // ✅ POPRAWIONE: BigDecimal
+    public List<Car> findByPriceRange(BigDecimal minPrice, BigDecimal maxPrice) {
         return carRepository.findByDailyRateBetween(minPrice, maxPrice);
     }
 
@@ -148,7 +154,7 @@ public class CarService {
         Car car = getCarById(id);
         if (car != null && car.getStatus() == Car.Status.AVAILABLE) {
             car.setStatus(Car.Status.RENTED);
-            return saveCar(car);
+            return save(car);
         }
         return null;
     }
@@ -157,7 +163,7 @@ public class CarService {
         Car car = getCarById(id);
         if (car != null && car.getStatus() == Car.Status.RENTED) {
             car.setStatus(Car.Status.AVAILABLE);
-            return saveCar(car);
+            return save(car);
         }
         return null;
     }

@@ -62,9 +62,9 @@ public class PdfService {
             table.addCell("End Date:");
             table.addCell(booking.getEndDate().toString());
             table.addCell("Daily Rate:");
-            table.addCell("$" + booking.getCar().getDailyRate().toString());
+            table.addCell(booking.getCar().getDailyRate().toString() + " PLN");
             table.addCell("Total Amount:");
-            table.addCell("$" + booking.getTotalAmount().toString());
+            table.addCell(booking.getTotalAmount().toString() + " PLN");
 
             document.add(table);
 
