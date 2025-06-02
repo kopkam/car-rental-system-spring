@@ -17,7 +17,6 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import java.time.LocalDate;
 import java.util.List;
 
 @Controller
@@ -43,28 +42,44 @@ public class BookingController {
 
         List<Booking> bookings;
 
-        if (user.getRoles().stream().anyMatch(role -> role.getName().name().equals("ROLE_ADMIN"))) {
+        if (user.hasRole("ROLE_ADMIN")) {
             bookings = bookingService.findAll();
-        } else if (user.getRoles().stream().anyMatch(role -> role.getName().name().equals("ROLE_MANAGER"))) {
+        } else if (user.hasRole("ROLE_MANAGER")) {
             bookings = bookingService.findByManager(user);
         } else {
             bookings = bookingService.findByCustomer(user);
         }
 
         model.addAttribute("bookings", bookings);
+        model.addAttribute("currentUser", user);
         return "bookings";
     }
 
     @GetMapping("/new")
     public String showBookingForm(Authentication auth, Model model) {
-        // Pobierz dostępne samochody
-        List<Car> availableCars = carService.getCarsByStatus(Car.Status.AVAILABLE);
-
-        // Pobierz aktualnie zalogowanego użytkownika
         String username = auth.getName();
         User currentUser = userService.findByUsername(username);
 
-        // Przekaż dane do formularza
+        List<Car> availableCars;
+
+        // ADMIN widzi wszystkie dostępne auta
+        if (currentUser.hasRole("ROLE_ADMIN")) {
+            availableCars = carService.getCarsByStatus(Car.Status.AVAILABLE);
+        }
+        // MANAGER widzi tylko swoje dostępne auta
+        else if (currentUser.hasRole("ROLE_MANAGER")) {
+            availableCars = carService.getAvailableCarsByManager(currentUser);
+
+            // Jeśli manager nie ma dostępnych aut, pokaż komunikat
+            if (availableCars.isEmpty()) {
+                model.addAttribute("noAvailableCars", true);
+            }
+        }
+        // CUSTOMER widzi wszystkie dostępne auta
+        else {
+            availableCars = carService.getCarsByStatus(Car.Status.AVAILABLE);
+        }
+
         model.addAttribute("availableCars", availableCars);
         model.addAttribute("currentUser", currentUser);
         model.addAttribute("booking", new Booking());
@@ -75,19 +90,36 @@ public class BookingController {
     @PostMapping
     public String createBooking(@ModelAttribute Booking booking, Authentication auth, RedirectAttributes redirectAttributes) {
         try {
-            // Pobierz użytkownika z bazy danych
             String username = auth.getName();
             User customer = userService.findByUsername(username);
 
-            booking.setCustomer(customer);
-            booking.setStatus(Booking.Status.PENDING); // Ustaw status na PENDING
-
-            // 🚗 ZMIEŃ STATUS AUTA NA RENTED
-            Car car = booking.getCar();
-            if (car != null) {
-                car.setStatus(Car.Status.RENTED);
-                carService.save(car); // Zapisz auto z nowym statusem
+            // Sprawdź czy auto jest dostępne
+            Car car = carService.getCarById(booking.getCar().getId());
+            if (car == null) {
+                redirectAttributes.addFlashAttribute("error", "Selected car not found.");
+                return "redirect:/bookings/new";
             }
+
+            if (car.getStatus() != Car.Status.AVAILABLE) {
+                redirectAttributes.addFlashAttribute("error", "Selected car is not available.");
+                return "redirect:/bookings/new";
+            }
+
+            // Jeśli manager, sprawdź czy auto należy do niego
+            if (customer.hasRole("ROLE_MANAGER")) {
+                if (car.getManager() == null || !car.getManager().getId().equals(customer.getId())) {
+                    redirectAttributes.addFlashAttribute("error", "You can only create bookings for your own cars.");
+                    return "redirect:/bookings/new";
+                }
+            }
+
+            booking.setCar(car);
+            booking.setCustomer(customer);
+            booking.setStatus(Booking.Status.PENDING);
+
+            // Zmień status auta na RENTED
+            car.setStatus(Car.Status.RENTED);
+            carService.save(car);
 
             bookingService.save(booking);
             redirectAttributes.addFlashAttribute("success", "Booking created successfully! Car is now rented.");
@@ -99,9 +131,21 @@ public class BookingController {
     }
 
     @PostMapping("/{id}/confirm")
-    public String confirmBooking(@PathVariable Long id, RedirectAttributes redirectAttributes) {
+    public String confirmBooking(@PathVariable Long id, Authentication auth, RedirectAttributes redirectAttributes) {
         try {
+            String username = auth.getName();
+            User currentUser = userService.findByUsername(username);
+
             Booking booking = bookingService.findById(id);
+
+            // Sprawdź uprawnienia
+            if (currentUser.hasRole("ROLE_MANAGER")) {
+                Car car = booking.getCar();
+                if (car.getManager() == null || !car.getManager().getId().equals(currentUser.getId())) {
+                    redirectAttributes.addFlashAttribute("error", "You can only confirm bookings for your own cars.");
+                    return "redirect:/bookings";
+                }
+            }
 
             if (booking.getStatus() == Booking.Status.PENDING) {
                 booking.setStatus(Booking.Status.CONFIRMED);
@@ -125,10 +169,27 @@ public class BookingController {
     }
 
     @PostMapping("/{id}/cancel")
-    public String cancelBooking(@PathVariable Long id, RedirectAttributes redirectAttributes) {
+    public String cancelBooking(@PathVariable Long id, Authentication auth, RedirectAttributes redirectAttributes) {
         try {
+            String username = auth.getName();
+            User currentUser = userService.findByUsername(username);
+
             Booking booking = bookingService.findById(id);
             Booking.Status oldStatus = booking.getStatus();
+
+            // Sprawdź uprawnienia
+            if (currentUser.hasRole("ROLE_MANAGER")) {
+                Car car = booking.getCar();
+                if (car.getManager() == null || !car.getManager().getId().equals(currentUser.getId())) {
+                    redirectAttributes.addFlashAttribute("error", "You can only cancel bookings for your own cars.");
+                    return "redirect:/bookings";
+                }
+            } else if (currentUser.hasRole("ROLE_CUSTOMER")) {
+                if (!booking.getCustomer().getId().equals(currentUser.getId())) {
+                    redirectAttributes.addFlashAttribute("error", "You can only cancel your own bookings.");
+                    return "redirect:/bookings";
+                }
+            }
 
             if (oldStatus == Booking.Status.PENDING ||
                     oldStatus == Booking.Status.CONFIRMED ||
@@ -136,7 +197,7 @@ public class BookingController {
 
                 booking.setStatus(Booking.Status.CANCELLED);
 
-                // 🚗 ZWOLNIJ SAMOCHÓD - ustaw na AVAILABLE
+                // Zwolnij samochód - ustaw na AVAILABLE
                 Car car = booking.getCar();
                 if (car != null) {
                     car.setStatus(Car.Status.AVAILABLE);
@@ -155,9 +216,20 @@ public class BookingController {
     }
 
     @PostMapping("/{id}/pay")
-    public String payBooking(@PathVariable Long id, RedirectAttributes redirectAttributes) {
+    public String payBooking(@PathVariable Long id, Authentication auth, RedirectAttributes redirectAttributes) {
         try {
+            String username = auth.getName();
+            User currentUser = userService.findByUsername(username);
+
             Booking booking = bookingService.findById(id);
+
+            // Sprawdź uprawnienia - tylko customer może płacić za swoje booking
+            if (currentUser.hasRole("ROLE_CUSTOMER")) {
+                if (!booking.getCustomer().getId().equals(currentUser.getId())) {
+                    redirectAttributes.addFlashAttribute("error", "You can only pay for your own bookings.");
+                    return "redirect:/bookings";
+                }
+            }
 
             if (booking.getStatus() == Booking.Status.CONFIRMED) {
                 booking.setStatus(Booking.Status.PAID);
@@ -181,18 +253,29 @@ public class BookingController {
         return "redirect:/bookings";
     }
 
-    // 🆕 NOWA METODA - COMPLETE BOOKING
     @PostMapping("/{id}/complete")
-    public String completeBooking(@PathVariable Long id, RedirectAttributes redirectAttributes) {
+    public String completeBooking(@PathVariable Long id, Authentication auth, RedirectAttributes redirectAttributes) {
         try {
+            String username = auth.getName();
+            User currentUser = userService.findByUsername(username);
+
             Booking booking = bookingService.findById(id);
+
+            // Sprawdź uprawnienia
+            if (currentUser.hasRole("ROLE_MANAGER")) {
+                Car car = booking.getCar();
+                if (car.getManager() == null || !car.getManager().getId().equals(currentUser.getId())) {
+                    redirectAttributes.addFlashAttribute("error", "You can only complete bookings for your own cars.");
+                    return "redirect:/bookings";
+                }
+            }
 
             if (booking.getStatus() == Booking.Status.PAID ||
                     booking.getStatus() == Booking.Status.CONFIRMED) {
 
                 booking.setStatus(Booking.Status.COMPLETED);
 
-                // 🚗 ZWOLNIJ SAMOCHÓD - ustaw na AVAILABLE
+                // Zwolnij samochód - ustaw na AVAILABLE
                 Car car = booking.getCar();
                 if (car != null) {
                     car.setStatus(Car.Status.AVAILABLE);
@@ -211,8 +294,25 @@ public class BookingController {
     }
 
     @GetMapping("/{id}/invoice")
-    public ResponseEntity<byte[]> downloadInvoice(@PathVariable Long id) {
+    public ResponseEntity<byte[]> downloadInvoice(@PathVariable Long id, Authentication auth) {
+        String username = auth.getName();
+        User currentUser = userService.findByUsername(username);
+
         Booking booking = bookingService.findById(id);
+
+        // Sprawdź uprawnienia do pobierania faktury
+        if (currentUser.hasRole("ROLE_CUSTOMER")) {
+            if (!booking.getCustomer().getId().equals(currentUser.getId())) {
+                return ResponseEntity.status(403).build(); // Forbidden
+            }
+        } else if (currentUser.hasRole("ROLE_MANAGER")) {
+            Car car = booking.getCar();
+            if (car.getManager() == null || !car.getManager().getId().equals(currentUser.getId())) {
+                return ResponseEntity.status(403).build(); // Forbidden
+            }
+        }
+        // Admin może pobierać wszystkie faktury
+
         byte[] pdfContent = pdfService.generateInvoicePdf(booking);
 
         HttpHeaders headers = new HttpHeaders();

@@ -53,6 +53,10 @@ public class User {
     @OneToMany(mappedBy = "manager", cascade = CascadeType.ALL)
     private Set<Booking> managedBookings;
 
+    // ✅ NOWA RELACJA - auta zarządzane przez managera
+    @OneToMany(mappedBy = "manager", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private Set<Car> managedCars;
+
     // Constructors, getters, setters
     public User() {}
 
@@ -97,4 +101,19 @@ public class User {
 
     public Set<Booking> getManagedBookings() { return managedBookings; }
     public void setManagedBookings(Set<Booking> managedBookings) { this.managedBookings = managedBookings; }
+
+    // ✅ GETTER I SETTER dla managedCars
+    public Set<Car> getManagedCars() { return managedCars; }
+    public void setManagedCars(Set<Car> managedCars) { this.managedCars = managedCars; }
+
+    // ✅ POMOCNICZA METODA - sprawdza czy user ma określoną rolę
+    public boolean hasRole(String roleName) {
+        return roles != null && roles.stream()
+                .anyMatch(role -> role.getName().name().equals(roleName));
+    }
+
+    // ✅ POMOCNICZA METODA - zwraca pełne imię
+    public String getFullName() {
+        return firstName + " " + lastName;
+    }
 }

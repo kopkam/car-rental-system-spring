@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -77,19 +77,36 @@
                                         <option value="AVAILABLE">Available</option>
                                         <option value="RENTED">Rented</option>
                                         <option value="MAINTENANCE">Maintenance</option>
-                                        <option value="OUT_OF_SERVICE">Out of Service</option>
                                     </select>
                                     <div th:if="${#fields.hasErrors('status')}" class="text-danger" th:errors="*{status}"></div>
                                 </div>
                             </div>
                         </div>
 
-                        <!--                        <div class="mb-3">
-                                                    <label for="description" class="form-label">Description</label>
-                                                    <textarea class="form-control" th:field="*{description}" rows="3"
-                                                              placeholder="Optional description of the car..."></textarea>
-                                                    <div th:if="${#fields.hasErrors('description')}" class="text-danger" th:errors="*{description}"></div>
-                                                </div>-->
+                        <!-- ✅ NOWE POLE - Manager Selection (tylko dla adminów) -->
+                        <div sec:authorize="hasRole('ROLE_ADMIN')" class="mb-3">
+                            <label for="manager" class="form-label">Assigned Manager</label>
+                            <select class="form-select" th:field="*{manager.id}" id="manager">
+                                <option value="">-- No Manager (Admin managed) --</option>
+                                <option th:each="manager : ${managers}"
+                                        th:value="${manager.id}"
+                                        th:text="${manager.firstName + ' ' + manager.lastName + ' (' + manager.username + ')'}"
+                                        th:selected="${car.manager != null and car.manager.id == manager.id}">
+                                    Manager Name
+                                </option>
+                            </select>
+                            <small class="form-text text-muted">Change the manager assigned to this car, or leave empty for admin management.</small>
+                        </div>
+
+                        <!-- ✅ INFO dla managerów -->
+                        <div sec:authorize="hasRole('ROLE_MANAGER')" class="mb-3">
+                            <div class="alert alert-info">
+                                <i class="bi bi-info-circle"></i> You are the manager of this car.
+                                <span th:if="${car.manager != null}">
+                                    Manager: <strong th:text="${car.manager.firstName + ' ' + car.manager.lastName}">Manager Name</strong>
+                                </span>
+                            </div>
+                        </div>
 
                         <div class="d-flex justify-content-between">
                             <a th:href="@{/cars/view/{id}(id=${car.id})}" class="btn btn-secondary">

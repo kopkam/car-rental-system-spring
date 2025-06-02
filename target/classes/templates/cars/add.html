@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -83,12 +83,26 @@
                             </div>
                         </div>
 
-                        <!--                        <div class="mb-3">
-                                                    <label for="description" class="form-label">Description</label>
-                                                    <textarea class="form-control" th:field="*{description}" rows="3"
-                                                              placeholder="Optional description of the car..."></textarea>
-                                                    <div th:if="${#fields.hasErrors('description')}" class="text-danger" th:errors="*{description}"></div>
-                                                </div>-->
+                        <!-- ✅ NOWE POLE - Manager Selection (tylko dla adminów) -->
+                        <div sec:authorize="hasRole('ROLE_ADMIN')" class="mb-3">
+                            <label for="manager" class="form-label">Assign to Manager</label>
+                            <select class="form-select" th:field="*{manager.id}" id="manager">
+                                <option value="">-- No Manager (Admin managed) --</option>
+                                <option th:each="manager : ${managers}"
+                                        th:value="${manager.id}"
+                                        th:text="${manager.firstName + ' ' + manager.lastName + ' (' + manager.username + ')'}">
+                                    Manager Name
+                                </option>
+                            </select>
+                            <small class="form-text text-muted">Select a manager to assign this car to, or leave empty for admin management.</small>
+                        </div>
+
+                        <!-- ✅ INFO dla managerów -->
+                        <div sec:authorize="hasRole('ROLE_MANAGER')" class="mb-3">
+                            <div class="alert alert-info">
+                                <i class="bi bi-info-circle"></i> This car will be automatically assigned to you as the manager.
+                            </div>
+                        </div>
 
                         <div class="d-flex justify-content-between">
                             <a href="/cars" class="btn btn-secondary">

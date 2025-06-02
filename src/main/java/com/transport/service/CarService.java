@@ -1,6 +1,7 @@
 package com.transport.service;
 
 import com.transport.entity.Car;
+import com.transport.entity.User;
 import com.transport.repository.CarRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -36,10 +37,11 @@ public class CarService {
 
     // ✅ METODA SAVE Z WALIDACJĄ - używana przy tworzeniu/edycji aut
     @Transactional
-    public Car saveCar(Car car) {
+    public Car saveCar(Car car, User currentUser) {
         try {
             System.out.println("=== SAVING CAR ===");
             System.out.println("Car: " + car);
+            System.out.println("Current user: " + currentUser.getUsername());
 
             // Check for duplicate license plate
             if (car.getId() == null) { // New car
@@ -49,6 +51,13 @@ public class CarService {
                 }
                 // Set createdAt for new cars
                 car.setCreatedAt(LocalDateTime.now());
+
+                // Przypisz managera automatycznie jeśli user jest managerem
+                if (currentUser.getRoles().stream().anyMatch(role -> role.getName().name().equals("ROLE_MANAGER"))) {
+                    car.setManager(currentUser);
+                    System.out.println("Auto assigned to manager: " + currentUser.getUsername());
+                }
+                // Jeśli admin nie przypisał managera, zostaw puste
             } else { // Updating existing car
                 Car existingCar = carRepository.findByLicensePlate(car.getLicensePlate());
                 if (existingCar != null && !existingCar.getId().equals(car.getId())) {
@@ -65,6 +74,12 @@ public class CarService {
             e.printStackTrace();
             throw e;
         }
+    }
+
+    // ✅ PRZECIĄŻONA METODA - dla przypadków gdy nie mamy usera
+    @Transactional
+    public Car saveCar(Car car) {
+        return carRepository.save(car);
     }
 
     public List<Car> getAvailableCars() {
@@ -148,6 +163,16 @@ public class CarService {
     // Dodatkowe metody dla statusów
     public List<Car> getCarsByStatus(Car.Status status) {
         return carRepository.findByStatus(status);
+    }
+
+    // ✅ POBIERZ AUTA MANAGERA - dla specific managera
+    public List<Car> getCarsByManager(User manager) {
+        return carRepository.findByManager(manager);
+    }
+
+    // ✅ POBIERZ DOSTĘPNE AUTA MANAGERA
+    public List<Car> getAvailableCarsByManager(User manager) {
+        return carRepository.findByManagerAndStatus(manager, Car.Status.AVAILABLE);
     }
 
     public Car rentCar(Long id) {

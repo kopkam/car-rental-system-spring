@@ -52,14 +52,18 @@
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
 
+    <!-- ✅ INFO dla managerów o ich autach -->
+    <div sec:authorize="hasRole('ROLE_MANAGER')" th:if="${cars.empty}" class="alert alert-warning">
+        <i class="bi bi-info-circle"></i> You don't have any cars assigned to you yet.
+        <a href="/cars/add" class="alert-link">Add your first car</a>.
+    </div>
+
     <!-- Cars Grid -->
     <div class="row">
-        <div th:if="${cars.empty}" class="col-12">
+        <div th:if="${cars.empty and #authorization.expression('hasRole(''ROLE_ADMIN'')')}" class="col-12">
             <div class="alert alert-info text-center">
                 <i class="bi bi-info-circle"></i> No cars available.
-                <span sec:authorize="hasAnyRole('ADMIN', 'MANAGER')">
-                        <a href="/cars/add">Add the first car</a>.
-                    </span>
+                <a href="/cars/add">Add the first car</a>.
             </div>
         </div>
 
@@ -75,29 +79,50 @@
                     <p class="card-text">
                         <strong>Year:</strong> <span th:text="${car.year}">2022</span><br>
                         <strong>License:</strong> <span th:text="${car.licensePlate}">ABC-123</span><br>
-                        <strong>Daily Rate:</strong> <span th:text="${car.dailyRate}">50.00</span> PLN
+                        <strong>Daily Rate:</strong> <span th:text="${car.dailyRate}">50.00</span> PLN<br>
+                        <!-- ✅ NOWE - pokaż managera -->
+                        <strong>Manager:</strong>
+                        <span th:if="${car.manager != null}"
+                              th:text="${car.manager.firstName + ' ' + car.manager.lastName}"
+                              class="text-primary">Manager Name</span>
+                        <span th:unless="${car.manager != null}"
+                              class="text-muted">Admin managed</span>
                     </p>
                 </div>
                 <div class="card-footer">
-                <div class="btn-group w-100" role="group">
-                    <a th:href="@{/cars/view/{id}(id=${car.id})}" class="btn btn-outline-primary btn-sm">
-                        <i class="bi bi-eye"></i> View
-                    </a>
-                    <div sec:authorize="hasAnyRole('ADMIN', 'MANAGER')">
-                        <a th:href="@{/cars/edit/{id}(id=${car.id})}" class="btn btn-outline-secondary btn-sm">
-                            <i class="bi bi-pencil"></i> Edit
+                    <div class="btn-group w-100" role="group">
+                        <a th:href="@{/cars/view/{id}(id=${car.id})}" class="btn btn-outline-primary btn-sm">
+                            <i class="bi bi-eye"></i> View
                         </a>
-                        <button type="button" class="btn btn-outline-danger btn-sm"
-                                data-bs-toggle="modal" th:data-bs-target="'#deleteModal' + ${car.id}">
-                            <i class="bi bi-trash"></i> Delete
-                        </button>
+                        <div sec:authorize="hasAnyRole('ADMIN', 'MANAGER')">
+                            <!-- ✅ Manager może edytować tylko swoje auta -->
+                            <a th:href="@{/cars/edit/{id}(id=${car.id})}"
+                               class="btn btn-outline-secondary btn-sm"
+                               th:if="${#authorization.expression('hasRole(''ROLE_ADMIN'')') or
+                                       (car.manager != null and car.manager.username == #authentication.name)}">
+                                <i class="bi bi-pencil"></i> Edit
+                            </a>
+                            <!-- ✅ Manager może usuwać tylko swoje auta -->
+                            <button type="button"
+                                    class="btn btn-outline-danger btn-sm"
+                                    data-bs-toggle="modal"
+                                    th:data-bs-target="'#deleteModal' + ${car.id}"
+                                    th:if="${#authorization.expression('hasRole(''ROLE_ADMIN'')') or
+                                            (car.manager != null and car.manager.username == #authentication.name)}">
+                                <i class="bi bi-trash"></i> Delete
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
-            </div>
 
             <!-- Delete Modal -->
-            <div sec:authorize="hasAnyRole('ADMIN', 'MANAGER')" class="modal fade" th:id="'deleteModal' + ${car.id}" tabindex="-1">
+            <div sec:authorize="hasAnyRole('ADMIN', 'MANAGER')"
+                 class="modal fade"
+                 th:id="'deleteModal' + ${car.id}"
+                 tabindex="-1"
+                 th:if="${#authorization.expression('hasRole(''ROLE_ADMIN'')') or
+                         (car.manager != null and car.manager.username == #authentication.name)}">
                 <div class="modal-dialog">
                     <div class="modal-content">
                         <div class="modal-header">

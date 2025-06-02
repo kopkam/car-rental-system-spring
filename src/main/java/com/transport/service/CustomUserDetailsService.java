@@ -11,6 +11,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.util.Collection;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -24,12 +25,13 @@ public class CustomUserDetailsService implements UserDetailsService {
         System.out.println("=== LOGIN ATTEMPT ===");
         System.out.println("Attempting to login user: " + username);
 
-        User user = userRepository.findByUsername(username);
-        if (user == null) {
+        Optional<User> userOpt = userRepository.findByUsername(username);
+        if (userOpt.isEmpty()) {
             System.out.println("User not found: " + username);
             throw new UsernameNotFoundException("User not found: " + username);
         }
 
+        User user = userOpt.get();
         System.out.println("User found: " + user.getUsername());
         System.out.println("User enabled: " + user.isEnabled());
         System.out.println("User password hash: " + user.getPassword());

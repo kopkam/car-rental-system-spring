@@ -11,8 +11,10 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -67,11 +69,13 @@ public class UserService {
     }
 
     public User findByUsername(String username) {
-        return userRepository.findByUsername(username);
+        Optional<User> userOpt = userRepository.findByUsername(username);
+        return userOpt.orElse(null);
     }
 
     public User findByEmail(String email) {
-        return userRepository.findByEmail(email);
+        Optional<User> userOpt = userRepository.findByEmail(email);
+        return userOpt.orElse(null);
     }
 
     public User findById(Long id) {
@@ -80,6 +84,17 @@ public class UserService {
 
     public List<User> findAll() {
         return userRepository.findAll();
+    }
+
+    // ✅ NOWA METODA - znajdź użytkowników po roli
+    public List<User> findByRole(String roleName) {
+        try {
+            Role.RoleName roleNameEnum = Role.RoleName.valueOf(roleName);
+            return userRepository.findByRoles_Name(roleNameEnum);
+        } catch (IllegalArgumentException e) {
+            System.err.println("Invalid role name: " + roleName);
+            return new ArrayList<>();
+        }
     }
 
     public User createUser(User user, Set<String> roleNames) {
@@ -159,5 +174,15 @@ public class UserService {
 
     public void deleteById(Long id) {
         userRepository.deleteById(id);
+    }
+
+    // ✅ POMOCNICZA METODA - sprawdza czy user istnieje po username
+    public boolean existsByUsername(String username) {
+        return userRepository.existsByUsername(username);
+    }
+
+    // ✅ POMOCNICZA METODA - sprawdza czy user istnieje po email
+    public boolean existsByEmail(String email) {
+        return userRepository.existsByEmail(email);
     }
 }

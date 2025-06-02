@@ -1,13 +1,17 @@
 package com.transport.controller;
 
 import com.transport.entity.Car;
+import com.transport.entity.User;
 import com.transport.service.CarService;
+import com.transport.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import jakarta.validation.Valid;
 import java.util.List;
@@ -19,61 +23,187 @@ public class CarController {
     @Autowired
     private CarService carService;
 
+    @Autowired
+    private UserService userService;
+
     @GetMapping
-    public String listCars(Model model) {
+    public String listCars(Authentication auth, Model model) {
         System.out.println("=== LOADING CARS PAGE ===");
-        List<Car> cars = carService.getAllCars();
+
+        String username = auth.getName();
+        User currentUser = userService.findByUsername(username);
+
+        List<Car> cars;
+
+        // ADMIN widzi wszystkie auta
+        if (currentUser.hasRole("ROLE_ADMIN")) {
+            cars = carService.getAllCars();
+        }
+        // MANAGER widzi tylko swoje auta
+        else if (currentUser.hasRole("ROLE_MANAGER")) {
+            cars = carService.getCarsByManager(currentUser);
+        }
+        // CUSTOMER widzi wszystkie auta (tylko do przeglądania)
+        else {
+            cars = carService.getAllCars();
+        }
+
         model.addAttribute("cars", cars);
-        System.out.println("Found " + cars.size() + " cars");
+        model.addAttribute("currentUser", currentUser);
+        System.out.println("Found " + cars.size() + " cars for user: " + username);
         return "cars/list";
     }
 
     @GetMapping("/add")
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
-    public String showAddForm(Model model) {
+    public String showAddForm(Authentication auth, Model model) {
+        String username = auth.getName();
+        User currentUser = userService.findByUsername(username);
+
         model.addAttribute("car", new Car());
+        model.addAttribute("currentUser", currentUser);
+
+        // Jeśli admin, dodaj listę managerów do wyboru
+        if (currentUser.hasRole("ROLE_ADMIN")) {
+            List<User> managers = userService.findByRole("ROLE_MANAGER");
+            model.addAttribute("managers", managers);
+        }
+
         return "cars/add";
     }
 
     @PostMapping("/add")
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
-    public String addCar(@Valid @ModelAttribute Car car, BindingResult result, Model model) {
+    public String addCar(@Valid @ModelAttribute Car car, BindingResult result,
+                         Authentication auth, Model model, RedirectAttributes redirectAttributes) {
         if (result.hasErrors()) {
+            String username = auth.getName();
+            User currentUser = userService.findByUsername(username);
+            model.addAttribute("currentUser", currentUser);
+
+            // Ponownie dodaj listę managerów dla admina jeśli były błędy
+            if (currentUser.hasRole("ROLE_ADMIN")) {
+                List<User> managers = userService.findByRole("ROLE_MANAGER");
+                model.addAttribute("managers", managers);
+            }
             return "cars/add";
         }
 
-        carService.saveCar(car);
-        return "redirect:/cars?success=true";
+        try {
+            String username = auth.getName();
+            User currentUser = userService.findByUsername(username);
+
+            // Użyj nowej metody z userem - automatycznie przypisze managera
+            carService.saveCar(car, currentUser);
+
+            redirectAttributes.addFlashAttribute("success", "Car added successfully!");
+            return "redirect:/cars";
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "Error adding car: " + e.getMessage());
+            return "redirect:/cars/add";
+        }
     }
 
     @GetMapping("/edit/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
-    public String showEditForm(@PathVariable Long id, Model model) {
+    public String showEditForm(@PathVariable Long id, Authentication auth, Model model) {
         Car car = carService.getCarById(id);
         if (car == null) {
             return "redirect:/cars?error=notfound";
         }
+
+        String username = auth.getName();
+        User currentUser = userService.findByUsername(username);
+
+        // Manager może edytować tylko swoje auta
+        if (currentUser.hasRole("ROLE_MANAGER")) {
+            if (car.getManager() == null || !car.getManager().getId().equals(currentUser.getId())) {
+                return "redirect:/cars?error=unauthorized";
+            }
+        }
+
         model.addAttribute("car", car);
+        model.addAttribute("currentUser", currentUser);
+
+        // Jeśli admin, dodaj listę managerów do wyboru
+        if (currentUser.hasRole("ROLE_ADMIN")) {
+            List<User> managers = userService.findByRole("ROLE_MANAGER");
+            model.addAttribute("managers", managers);
+        }
+
         return "cars/edit";
     }
 
     @PostMapping("/edit/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
-    public String updateCar(@PathVariable Long id, @Valid @ModelAttribute Car car, BindingResult result) {
+    public String updateCar(@PathVariable Long id, @Valid @ModelAttribute Car car,
+                            BindingResult result, Authentication auth, Model model,
+                            RedirectAttributes redirectAttributes) {
         if (result.hasErrors()) {
+            String username = auth.getName();
+            User currentUser = userService.findByUsername(username);
+            model.addAttribute("currentUser", currentUser);
+
+            // Ponownie dodaj listę managerów dla admina jeśli były błędy
+            if (currentUser.hasRole("ROLE_ADMIN")) {
+                List<User> managers = userService.findByRole("ROLE_MANAGER");
+                model.addAttribute("managers", managers);
+            }
             return "cars/edit";
         }
 
-        car.setId(id);
-        carService.saveCar(car);
-        return "redirect:/cars?updated=true";
+        try {
+            String username = auth.getName();
+            User currentUser = userService.findByUsername(username);
+
+            // Sprawdź uprawnienia managera
+            Car existingCar = carService.getCarById(id);
+            if (currentUser.hasRole("ROLE_MANAGER")) {
+                if (existingCar.getManager() == null || !existingCar.getManager().getId().equals(currentUser.getId())) {
+                    redirectAttributes.addFlashAttribute("error", "You can only edit your own cars!");
+                    return "redirect:/cars";
+                }
+            }
+
+            car.setId(id);
+
+            // Zachowaj managera jeśli nie został zmieniony (dla managerów)
+            if (currentUser.hasRole("ROLE_MANAGER")) {
+                car.setManager(currentUser);
+            }
+
+            carService.saveCar(car);
+            redirectAttributes.addFlashAttribute("success", "Car updated successfully!");
+            return "redirect:/cars";
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "Error updating car: " + e.getMessage());
+            return "redirect:/cars/edit/" + id;
+        }
     }
 
     @PostMapping("/delete/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
-    public String deleteCar(@PathVariable Long id) {
-        carService.deleteCar(id);
-        return "redirect:/cars?deleted=true";
+    public String deleteCar(@PathVariable Long id, Authentication auth, RedirectAttributes redirectAttributes) {
+        try {
+            String username = auth.getName();
+            User currentUser = userService.findByUsername(username);
+
+            // Sprawdź uprawnienia managera
+            Car car = carService.getCarById(id);
+            if (currentUser.hasRole("ROLE_MANAGER")) {
+                if (car.getManager() == null || !car.getManager().getId().equals(currentUser.getId())) {
+                    redirectAttributes.addFlashAttribute("error", "You can only delete your own cars!");
+                    return "redirect:/cars";
+                }
+            }
+
+            carService.deleteCar(id);
+            redirectAttributes.addFlashAttribute("success", "Car deleted successfully!");
+            return "redirect:/cars";
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "Error deleting car: " + e.getMessage());
+            return "redirect:/cars";
+        }
     }
 
     @GetMapping("/view/{id}")
