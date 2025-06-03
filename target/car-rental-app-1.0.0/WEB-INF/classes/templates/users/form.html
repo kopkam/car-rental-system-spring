@@ -1,134 +1,352 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title th:text="${user.id != null ? 'Edit User' : 'Add New User'}">User Form</title>
+    <title th:text="${user.id != null ? 'Edit User' : 'Add New User'}">User Form - Car Rental Pro</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --accent-color: #e74c3c;
+            --success-color: #27ae60;
+            --warning-color: #f39c12;
+            --info-color: #8e44ad;
+            --background-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        body {
+            background: var(--background-gradient);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .main-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            margin: 2rem auto;
+            padding: 2rem;
+            max-width: 800px;
+        }
+
+        .page-header {
+            background: linear-gradient(135deg, #8e44ad 0%, #9b59b6 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 15px;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .form-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+
+        .form-control, .form-select {
+            border-radius: 10px;
+            border: 2px solid #e9ecef;
+            padding: 12px 15px;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: var(--secondary-color);
+            box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            border: none;
+            border-radius: 10px;
+            padding: 12px 30px;
+            font-weight: 600;
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #95a5a6, #7f8c8d);
+            border: none;
+            border-radius: 10px;
+            padding: 12px 30px;
+            font-weight: 600;
+        }
+
+        .role-checkbox {
+            margin: 10px 0;
+            padding: 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .role-checkbox:hover {
+            border-color: var(--secondary-color);
+            background: rgba(52, 152, 219, 0.05);
+        }
+
+        .manager-selection {
+            background: linear-gradient(135deg, rgba(142, 68, 173, 0.1), rgba(155, 89, 182, 0.1));
+            border: 2px solid var(--info-color);
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-top: 1rem;
+        }
+
+        .manager-selection h6 {
+            color: var(--info-color);
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+
+        .alert {
+            border-radius: 10px;
+            margin-bottom: 1rem;
+        }
+
+        .form-floating {
+            margin-bottom: 1rem;
+        }
+
+        .btn-group {
+            margin-top: 2rem;
+        }
+    </style>
 </head>
 <body>
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-    <div class="container">
-        <a class="navbar-brand" href="/dashboard">Car Rental</a>
-        <div class="navbar-nav ms-auto">
-            <a class="nav-link" href="/users">Back to Users</a>
-            <a class="btn btn-outline-light" href="/logout">Logout</a>
+
+<div class="container">
+    <div class="main-container">
+        <!-- Page Header -->
+        <div class="page-header">
+            <h1>
+                <i class="bi bi-person-gear me-3"></i>
+                <span th:if="${user.id == null}" th:text="#{users.add}">Add New User</span>
+                <span th:if="${user.id != null}" th:text="#{users.edit} + ' ' + ${user.firstName} + ' ' + ${user.lastName}">Edit User</span>
+            </h1>
         </div>
-    </div>
-</nav>
 
-<div class="container mt-4">
-    <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="card">
-                <div class="card-header">
-                    <h3>
-                        <i th:class="${user.id != null ? 'bi bi-pencil' : 'bi bi-plus-circle'}"></i>
-                        <span th:text="${user.id != null ? 'Edit User' : 'Add New User'}">User Form</span>
-                    </h3>
+        <!-- Error Messages -->
+        <div th:if="${error}" class="alert alert-danger">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+            <span th:text="${error}">Error message</span>
+        </div>
+
+        <!-- User Form -->
+        <form th:action="${user.id != null} ? @{/users/{id}(id=${user.id})} : @{/users}"
+              method="post" th:object="${user}" class="needs-validation" novalidate>
+
+            <div class="form-section">
+                <h5><i class="bi bi-person me-2"></i>Basic Information</h5>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-floating">
+                            <input type="text" class="form-control" id="username" th:field="*{username}"
+                                   placeholder="Username" required>
+                            <label for="username" th:text="#{register.username}">Username</label>
+                            <div class="invalid-feedback" th:if="${#fields.hasErrors('username')}"
+                                 th:errors="*{username}">Username error</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-floating">
+                            <input type="email" class="form-control" id="email" th:field="*{email}"
+                                   placeholder="Email" required>
+                            <label for="email" th:text="#{register.email}">Email</label>
+                            <div class="invalid-feedback" th:if="${#fields.hasErrors('email')}"
+                                 th:errors="*{email}">Email error</div>
+                        </div>
+                    </div>
                 </div>
-                <div class="card-body">
-                    <!-- Error Messages -->
-                    <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
 
-                    <form th:object="${user}"
-                          th:action="${user.id != null ? '/users/' + user.id : '/users'}"
-                          method="post">
-
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="username" class="form-label">Username *</label>
-                                    <input type="text" class="form-control" th:field="*{username}" required>
-                                    <div th:if="${#fields.hasErrors('username')}" class="text-danger" th:errors="*{username}"></div>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="email" class="form-label">Email *</label>
-                                    <input type="email" class="form-control" th:field="*{email}" required>
-                                    <div th:if="${#fields.hasErrors('email')}" class="text-danger" th:errors="*{email}"></div>
-                                </div>
-                            </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-floating">
+                            <input type="text" class="form-control" id="firstName" th:field="*{firstName}"
+                                   placeholder="First Name" required>
+                            <label for="firstName" th:text="#{register.firstName}">First Name</label>
+                            <div class="invalid-feedback" th:if="${#fields.hasErrors('firstName')}"
+                                 th:errors="*{firstName}">First name error</div>
                         </div>
-
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="firstName" class="form-label">First Name *</label>
-                                    <input type="text" class="form-control" th:field="*{firstName}" required>
-                                    <div th:if="${#fields.hasErrors('firstName')}" class="text-danger" th:errors="*{firstName}"></div>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="lastName" class="form-label">Last Name *</label>
-                                    <input type="text" class="form-control" th:field="*{lastName}" required>
-                                    <div th:if="${#fields.hasErrors('lastName')}" class="text-danger" th:errors="*{lastName}"></div>
-                                </div>
-                            </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-floating">
+                            <input type="text" class="form-control" id="lastName" th:field="*{lastName}"
+                                   placeholder="Last Name" required>
+                            <label for="lastName" th:text="#{register.lastName}">Last Name</label>
+                            <div class="invalid-feedback" th:if="${#fields.hasErrors('lastName')}"
+                                 th:errors="*{lastName}">Last name error</div>
                         </div>
+                    </div>
+                </div>
 
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="password" class="form-label">
-                                        Password <span th:if="${user.id != null}">(leave blank to keep current)</span>
-                                        <span th:if="${user.id == null}">*</span>
-                                    </label>
-                                    <input type="password" class="form-control" th:field="*{password}"
-                                           th:required="${user.id == null}">
-                                    <div th:if="${#fields.hasErrors('password')}" class="text-danger" th:errors="*{password}"></div>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label class="form-label">Status</label>
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" th:field="*{enabled}" id="enabled">
-                                        <label class="form-check-label" for="enabled">
-                                            User Enabled
-                                        </label>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label">Roles *</label>
-                            <div class="row">
-                                <div th:each="role : ${roles}" class="col-md-4">
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox"
-                                               th:id="'role_' + ${role}"
-                                               name="roleNames"
-                                               th:value="${role}"
-                                               th:checked="${user.roles != null and #lists.contains(user.roles.![name], role)}">
-                                        <label class="form-check-label" th:for="'role_' + ${role}" th:text="${role}">
-                                            Role Name
-                                        </label>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="d-flex justify-content-between">
-                            <a href="/users" class="btn btn-secondary">
-                                <i class="bi bi-arrow-left"></i> Cancel
-                            </a>
-                            <button type="submit" class="btn btn-primary">
-                                <i class="bi bi-check-circle"></i>
-                                <span th:text="${user.id != null ? 'Update User' : 'Create User'}">Save</span>
-                            </button>
-                        </div>
-                    </form>
+                <div class="form-floating">
+                    <input type="password" class="form-control" id="password" th:field="*{password}"
+                           placeholder="Password" th:required="${user.id == null}">
+                    <label for="password" th:text="#{register.password}">Password</label>
+                    <small class="form-text text-muted" th:if="${user.id != null}">
+                        Leave empty to keep current password
+                    </small>
+                    <div class="invalid-feedback" th:if="${#fields.hasErrors('password')}"
+                         th:errors="*{password}">Password error</div>
                 </div>
             </div>
-        </div>
+
+            <!-- Roles Section (tylko dla adminów) -->
+            <div class="form-section" th:if="${currentUserRole == 'ADMIN'}">
+                <h5><i class="bi bi-shield-check me-2"></i>User Roles</h5>
+
+                <div class="row">
+                    <div class="col-md-4" th:each="role : ${roles}">
+                        <div class="role-checkbox">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox"
+                                       th:id="${'role_' + role}" th:value="${role}" name="roleNames"
+                                       th:checked="${user.roles != null && user.roles.![name].contains(role)}">
+                                <label class="form-check-label" th:for="${'role_' + role}">
+                                    <strong th:text="${#strings.replace(role, 'ROLE_', '')}">ROLE</strong>
+                                    <br>
+                                    <small class="text-muted"
+                                           th:text="${role == 'ROLE_ADMIN'} ? 'Full system access' :
+                                                    (${role == 'ROLE_MANAGER'} ? 'Manage customers & cars' : 'Book cars & make reservations')">
+                                        Role description
+                                    </small>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ✅ NOWA SEKCJA - Info dla managera -->
+            <div class="form-section" th:if="${currentUserRole == 'MANAGER'}">
+                <div class="alert alert-info">
+                    <h6><i class="bi bi-info-circle me-2"></i>Manager Information</h6>
+                    <p class="mb-0">As a manager, you can only create <strong>CUSTOMER</strong> users who will be automatically assigned to you.</p>
+                </div>
+
+                <!-- ✅ POPRAWIONY Hidden input dla managera -->
+                <input type="hidden" name="roleNames" value="ROLE_CUSTOMER" />
+
+                <!-- ✅ ALTERNATYWNIE - checkbox ukryty i zaznaczony -->
+                <div style="display: none;">
+                    <input type="checkbox" name="roleNames" value="ROLE_CUSTOMER" checked="checked" />
+                </div>
+            </div>
+
+            <!-- Manager Assignment Section (dla customerów) -->
+            <div class="form-section" th:if="${availableManagers != null && !availableManagers.empty}">
+                <div class="manager-selection">
+                    <h6><i class="bi bi-person-badge me-2"></i>Manager Assignment</h6>
+                    <p class="text-muted mb-3">
+                        <span th:if="${currentUserRole == 'ADMIN'}">Choose which manager will be responsible for this customer.</span>
+                        <span th:if="${currentUserRole == 'MANAGER'}">You can transfer this customer to another manager.</span>
+                    </p>
+
+                    <div class="form-floating">
+                        <select class="form-select" id="managerId" name="managerId">
+                            <option value="">Select Manager (optional)</option>
+                            <option th:each="manager : ${availableManagers}"
+                                    th:value="${manager.id}"
+                                    th:text="${manager.firstName + ' ' + manager.lastName + ' (' + manager.username + ')'}"
+                                    th:selected="${user.manager != null && user.manager.id == manager.id}">
+                                Manager Name
+                            </option>
+                        </select>
+                        <label for="managerId">Assigned Manager</label>
+                    </div>
+
+                    <div class="mt-2" th:if="${user.manager != null}">
+                        <small class="text-info">
+                            <i class="bi bi-info-circle me-1"></i>
+                            Currently assigned to: <strong th:text="${user.manager.firstName + ' ' + user.manager.lastName}">Current Manager</strong>
+                        </small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="btn-group d-flex gap-3 justify-content-center">
+                <button type="submit" class="btn btn-primary btn-lg">
+                    <i class="bi bi-check-circle me-2"></i>
+                    <span th:if="${user.id == null}" th:text="#{common.submit}">Create User</span>
+                    <span th:if="${user.id != null}" th:text="#{common.save}">Update User</span>
+                </button>
+
+                <a href="/users" class="btn btn-secondary btn-lg">
+                    <i class="bi bi-arrow-left me-2"></i>
+                    <span th:text="#{common.cancel}">Cancel</span>
+                </a>
+            </div>
+        </form>
     </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // Form validation
+    (function() {
+        'use strict';
+        window.addEventListener('load', function() {
+            var forms = document.getElementsByClassName('needs-validation');
+            var validation = Array.prototype.filter.call(forms, function(form) {
+                form.addEventListener('submit', function(event) {
+                    if (form.checkValidity() === false) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                    }
+                    form.classList.add('was-validated');
+                }, false);
+            });
+        }, false);
+    })();
+
+    // Dynamic role descriptions
+    document.addEventListener('DOMContentLoaded', function() {
+        const roleCheckboxes = document.querySelectorAll('input[name="roleNames"]');
+
+        roleCheckboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                const roleDiv = this.closest('.role-checkbox');
+                if (this.checked) {
+                    roleDiv.style.borderColor = '#3498db';
+                    roleDiv.style.backgroundColor = 'rgba(52, 152, 219, 0.1)';
+                } else {
+                    roleDiv.style.borderColor = '#e9ecef';
+                    roleDiv.style.backgroundColor = 'transparent';
+                }
+            });
+
+            // Set initial state
+            if (checkbox.checked) {
+                const roleDiv = checkbox.closest('.role-checkbox');
+                roleDiv.style.borderColor = '#3498db';
+                roleDiv.style.backgroundColor = 'rgba(52, 152, 219, 0.1)';
+            }
+        });
+
+        // Manager selection highlight
+        const managerSelect = document.getElementById('managerId');
+        if (managerSelect) {
+            managerSelect.addEventListener('change', function() {
+                const managerSection = document.querySelector('.manager-selection');
+                if (this.value) {
+                    managerSection.style.borderColor = '#27ae60';
+                    managerSection.style.backgroundColor = 'rgba(39, 174, 96, 0.1)';
+                } else {
+                    managerSection.style.borderColor = '#8e44ad';
+                    managerSection.style.backgroundColor = 'rgba(142, 68, 173, 0.1)';
+                }
+            });
+        }
+    });
+</script>
 </body>
 </html>

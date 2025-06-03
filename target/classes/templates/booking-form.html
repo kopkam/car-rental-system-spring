@@ -1,147 +1,597 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Car Rental - New Booking</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+    <title th:text="#{app.title}">Car Rental Pro - New Booking</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary-color: #6f42c1;
+            --secondary-color: #3498db;
+            --success-color: #27ae60;
+            --warning-color: #f39c12;
+            --accent-color: #e74c3c;
+            --dark-color: #2c3e50;
+            --light-bg: #f8f9fa;
+            --card-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            --gradient-bg: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--gradient-bg);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .navbar {
+            background: rgba(44, 62, 80, 0.95) !important;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 2px 20px rgba(0,0,0,0.1);
+        }
+
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 1.5rem;
+            color: #fff !important;
+        }
+
+        .nav-link.active {
+            background: rgba(52, 152, 219, 0.2) !important;
+            border-radius: 8px;
+        }
+
+        /* Main Container */
+        .main-container {
+            padding: 40px 0;
+            min-height: calc(100vh - 80px);
+        }
+
+        /* Form Card */
+        .form-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            box-shadow: var(--card-shadow);
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .form-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+        }
+
+        .card-header-custom {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 30px;
+            border: none;
+            text-align: center;
+        }
+
+        .page-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin: 0;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .page-subtitle {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            margin-top: 10px;
+        }
+
+        .card-body-custom {
+            padding: 40px;
+        }
+
+        /* Form Styling */
+        .form-section {
+            margin-bottom: 40px;
+        }
+
+        .section-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--dark-color);
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--primary-color);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .form-label {
+            font-weight: 600;
+            color: var(--dark-color);
+            margin-bottom: 8px;
+            font-size: 0.95rem;
+        }
+
+        .form-control, .form-select {
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            padding: 12px 16px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.8);
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(111, 66, 193, 0.25);
+            background: white;
+            transform: translateY(-2px);
+        }
+
+        .form-control[readonly] {
+            background: var(--light-bg);
+            border-color: #dee2e6;
+        }
+
+        /* Summary Card */
+        .summary-card {
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            border: 2px solid var(--primary-color);
+            border-radius: 15px;
+            margin-bottom: 30px;
+        }
+
+        .summary-title {
+            color: var(--primary-color);
+            font-weight: 700;
+            margin-bottom: 20px;
+        }
+
+        .summary-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(111, 66, 193, 0.1);
+        }
+
+        .summary-item:last-child {
+            border-bottom: none;
+        }
+
+        .summary-label {
+            font-weight: 600;
+            color: var(--dark-color);
+        }
+
+        .summary-value {
+            font-weight: 500;
+        }
+
+        .status-badge {
+            background: linear-gradient(135deg, var(--warning-color), #d68910);
+            color: white;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .cost-highlight {
+            color: var(--success-color);
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+
+        /* Buttons */
+        .btn-custom {
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border: none;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-cancel {
+            background: linear-gradient(135deg, #6c757d, #5a6268);
+            color: white;
+        }
+
+        .btn-cancel:hover {
+            background: linear-gradient(135deg, #5a6268, #4e555b);
+            color: white;
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(108, 117, 125, 0.3);
+        }
+
+        .btn-submit {
+            background: linear-gradient(135deg, var(--success-color), #229954);
+            color: white;
+        }
+
+        .btn-submit:hover {
+            background: linear-gradient(135deg, #229954, #1e7e4a);
+            color: white;
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(39, 174, 96, 0.3);
+        }
+
+        /* Alert Styling */
+        .alert-danger {
+            background: linear-gradient(135deg, rgba(231, 76, 60, 0.1), rgba(192, 57, 43, 0.1));
+            border: 1px solid var(--accent-color);
+            border-radius: 12px;
+            color: var(--accent-color);
+            margin-bottom: 25px;
+        }
+
+        .text-danger {
+            color: var(--accent-color) !important;
+            font-size: 0.875rem;
+            margin-top: 5px;
+        }
+
+        /* Input Icons */
+        .input-group-icon {
+            position: relative;
+        }
+
+        .input-group-icon .form-control {
+            padding-left: 45px;
+        }
+
+        .input-icon {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--primary-color);
+            z-index: 5;
+        }
+
+        /* Animation */
+        .fade-in {
+            animation: fadeIn 0.6s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .main-container {
+                padding: 20px 0;
+            }
+
+            .card-body-custom {
+                padding: 20px;
+            }
+
+            .page-title {
+                font-size: 2rem;
+            }
+
+            .btn-custom {
+                width: 100%;
+                justify-content: center;
+                margin-bottom: 10px;
+            }
+        }
+
+        /* Car Selection Enhancement */
+        .car-option {
+            padding: 12px 16px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .car-option:last-child {
+            border-bottom: none;
+        }
+
+        /* Required Field Indicator */
+        .required::after {
+            content: " *";
+            color: var(--accent-color);
+            font-weight: bold;
+        }
+    </style>
 </head>
 <body>
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+<!-- Navigation -->
+<nav class="navbar navbar-expand-lg navbar-dark">
     <div class="container">
-        <a class="navbar-brand" href="/dashboard">Car Rental</a>
+        <a class="navbar-brand" href="/dashboard">
+            <i class="bi bi-truck me-2"></i><span th:text="#{app.title}">Car Rental Pro</span>
+        </a>
         <div class="navbar-nav ms-auto">
-            <a class="nav-link" href="/dashboard">Back to Dashboard</a>
-            <a class="btn btn-outline-light" href="/logout">Logout</a>
+            <a class="nav-link" href="/dashboard">
+                <i class="bi bi-speedometer2 me-1"></i><span th:text="#{nav.dashboard}">Dashboard</span>
+            </a>
+            <a class="nav-link" href="/cars">
+                <i class="bi bi-truck me-1"></i><span th:text="#{nav.cars}">Cars</span>
+            </a>
+            <a class="nav-link active" href="/reservations">
+                <i class="bi bi-calendar-check me-1"></i><span th:text="#{nav.reservations}">Reservations</span>
+            </a>
+            <span class="navbar-text me-3">
+                    <i class="bi bi-person-circle me-1"></i><span th:text="#{nav.welcome}">Welcome</span> <span sec:authentication="name">User</span>!
+                </span>
+            <form th:action="@{/logout}" method="post" style="display: inline;">
+                <button type="submit" class="btn btn-outline-light">
+                    <i class="bi bi-box-arrow-right me-1"></i><span th:text="#{nav.logout}">Logout</span>
+                </button>
+            </form>
         </div>
     </div>
 </nav>
 
-<div class="container mt-4">
-    <div class="row justify-content-center">
-        <div class="col-md-10">
-            <div class="card">
-                <div class="card-header">
-                    <h3><i class="bi bi-calendar-plus"></i> New Booking</h3>
-                </div>
-                <div class="card-body">
-                    <!-- Error Messages -->
-                    <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+<!-- Main Content -->
+<div class="main-container">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-xl-10 col-lg-11">
+                <div class="form-card fade-in">
+                    <!-- Header -->
+                    <div class="card-header-custom">
+                        <h1 class="page-title">
+                            <i class="bi bi-calendar-plus me-3"></i>
+                            <span th:text="#{booking.new.title}">New Booking</span>
+                        </h1>
+                        <p class="page-subtitle" th:text="#{booking.new.subtitle}">Create a new car rental reservation</p>
+                    </div>
 
-                    <form th:object="${booking}" th:action="@{/bookings}" method="post">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="car" class="form-label">Select Car *</label>
-                                    <select class="form-select" th:field="*{car}" required>
-                                        <option value="">Choose a car...</option>
-                                        <option th:each="car : ${availableCars}"
-                                                th:value="${car.id}"
-                                                th:text="${car.brand + ' ' + car.model + ' (' + car.year + ') - ' + car.dailyRate + ' PLN/day'}">
-                                            Car Option
-                                        </option>
-                                    </select>
-                                    <div th:if="${#fields.hasErrors('car')}" class="text-danger" th:errors="*{car}"></div>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="customer" class="form-label">Customer</label>
-                                    <input type="text" class="form-control"
-                                           th:value="${currentUser.firstName + ' ' + currentUser.lastName}"
-                                           readonly>
-                                    <input type="hidden" th:field="*{customer}" th:value="${currentUser.id}">
-                                </div>
-                            </div>
+                    <!-- Form Body -->
+                    <div class="card-body-custom">
+                        <!-- Error Messages -->
+                        <div th:if="${error}" class="alert alert-danger">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            <span th:text="${error}"></span>
                         </div>
 
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="startDate" class="form-label">Start Date *</label>
-                                    <input type="date" class="form-control" th:field="*{startDate}" required>
-                                    <div th:if="${#fields.hasErrors('startDate')}" class="text-danger" th:errors="*{startDate}"></div>
+                        <form th:object="${booking}" th:action="@{/bookings}" method="post">
+                            <!-- Car Selection Section -->
+                            <div class="form-section">
+                                <h3 class="section-title">
+                                    <i class="bi bi-car-front"></i>
+                                    <span th:text="#{booking.section.car}">Vehicle Selection</span>
+                                </h3>
+                                <div class="row">
+                                    <div class="col-md-8">
+                                        <div class="mb-3">
+                                            <label for="car" class="form-label required" th:text="#{booking.car}">Select Car</label>
+                                            <select class="form-select" th:field="*{car}" required>
+                                                <option value="" th:text="#{booking.car.choose}">Choose a car...</option>
+                                                <option th:each="car : ${availableCars}"
+                                                        th:value="${car.id}"
+                                                        th:text="${car.brand + ' ' + car.model + ' (' + car.year + ') - ' + car.dailyRate + ' PLN/day'}">
+                                                    Car Option
+                                                </option>
+                                            </select>
+                                            <div th:if="${#fields.hasErrors('car')}" class="text-danger" th:errors="*{car}"></div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            <label for="customer" class="form-label" th:text="#{booking.customer}">Customer</label>
+                                            <input type="text" class="form-control"
+                                                   th:value="${currentUser.firstName + ' ' + currentUser.lastName}"
+                                                   readonly>
+                                            <input type="hidden" th:field="*{customer}" th:value="${currentUser.id}">
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="endDate" class="form-label">End Date *</label>
-                                    <input type="date" class="form-control" th:field="*{endDate}" required>
-                                    <div th:if="${#fields.hasErrors('endDate')}" class="text-danger" th:errors="*{endDate}"></div>
-                                </div>
-                            </div>
-                        </div>
 
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="pickupLocation" class="form-label">Pickup Location *</label>
-                                    <input type="text" class="form-control" th:field="*{pickupLocation}"
-                                           placeholder="e.g., Warsaw Airport" required>
-                                    <div th:if="${#fields.hasErrors('pickupLocation')}" class="text-danger" th:errors="*{pickupLocation}"></div>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="dropoffLocation" class="form-label">Drop-off Location *</label>
-                                    <input type="text" class="form-control" th:field="*{dropoffLocation}"
-                                           placeholder="e.g., Krakow City Center" required>
-                                    <div th:if="${#fields.hasErrors('dropoffLocation')}" class="text-danger" th:errors="*{dropoffLocation}"></div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="specialRequests" class="form-label">Special Requests</label>
-                            <textarea class="form-control" th:field="*{specialRequests}" rows="3"
-                                      placeholder="Any special requests or notes..."></textarea>
-                        </div>
-
-                        <div class="card bg-light mb-3">
-                            <div class="card-body">
-                                <h5 class="card-title">Booking Summary</h5>
+                            <!-- Date Selection Section -->
+                            <div class="form-section">
+                                <h3 class="section-title">
+                                    <i class="bi bi-calendar-range"></i>
+                                    <span th:text="#{booking.section.dates}">Rental Period</span>
+                                </h3>
                                 <div class="row">
                                     <div class="col-md-6">
-                                        <p><strong>Customer:</strong> <span th:text="${currentUser.firstName + ' ' + currentUser.lastName}">Customer Name</span></p>
-                                        <p><strong>Email:</strong> <span th:text="${currentUser.email}">customer@email.com</span></p>
+                                        <div class="mb-3">
+                                            <label for="startDate" class="form-label required" th:text="#{booking.startDate}">Start Date</label>
+                                            <div class="input-group-icon">
+                                                <i class="bi bi-calendar-event input-icon"></i>
+                                                <input type="date" class="form-control" th:field="*{startDate}" required>
+                                            </div>
+                                            <div th:if="${#fields.hasErrors('startDate')}" class="text-danger" th:errors="*{startDate}"></div>
+                                        </div>
                                     </div>
                                     <div class="col-md-6">
-                                        <p><strong>Status:</strong> <span class="badge bg-warning">Pending</span></p>
-                                        <p><strong>Total Cost:</strong> <span class="text-success fw-bold">Will be calculated after car selection</span></p>
+                                        <div class="mb-3">
+                                            <label for="endDate" class="form-label required" th:text="#{booking.endDate}">End Date</label>
+                                            <div class="input-group-icon">
+                                                <i class="bi bi-calendar-check input-icon"></i>
+                                                <input type="date" class="form-control" th:field="*{endDate}" required>
+                                            </div>
+                                            <div th:if="${#fields.hasErrors('endDate')}" class="text-danger" th:errors="*{endDate}"></div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
 
-                        <div class="d-flex justify-content-between">
-                            <a href="/dashboard" class="btn btn-secondary">
-                                <i class="bi bi-arrow-left"></i> Cancel
-                            </a>
-                            <button type="submit" class="btn btn-primary">
-                                <i class="bi bi-check-circle"></i> Create Booking
-                            </button>
-                        </div>
-                    </form>
+                            <!-- Location Section -->
+                            <div class="form-section">
+                                <h3 class="section-title">
+                                    <i class="bi bi-geo-alt"></i>
+                                    <span th:text="#{booking.section.location}">Pickup & Drop-off</span>
+                                </h3>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="pickupLocation" class="form-label required" th:text="#{booking.pickup}">Pickup Location</label>
+                                            <div class="input-group-icon">
+                                                <i class="bi bi-geo input-icon"></i>
+                                                <input type="text" class="form-control" th:field="*{pickupLocation}"
+                                                       th:placeholder="#{booking.pickup.placeholder}" required>
+                                            </div>
+                                            <div th:if="${#fields.hasErrors('pickupLocation')}" class="text-danger" th:errors="*{pickupLocation}"></div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="dropoffLocation" class="form-label required" th:text="#{booking.dropoff}">Drop-off Location</label>
+                                            <div class="input-group-icon">
+                                                <i class="bi bi-geo-alt-fill input-icon"></i>
+                                                <input type="text" class="form-control" th:field="*{dropoffLocation}"
+                                                       th:placeholder="#{booking.dropoff.placeholder}" required>
+                                            </div>
+                                            <div th:if="${#fields.hasErrors('dropoffLocation')}" class="text-danger" th:errors="*{dropoffLocation}"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Special Requests Section -->
+                            <div class="form-section">
+                                <h3 class="section-title">
+                                    <i class="bi bi-chat-text"></i>
+                                    <span th:text="#{booking.section.requests}">Additional Information</span>
+                                </h3>
+                                <div class="mb-3">
+                                    <label for="specialRequests" class="form-label" th:text="#{booking.requests}">Special Requests</label>
+                                    <textarea class="form-control" th:field="*{specialRequests}" rows="4"
+                                              th:placeholder="#{booking.requests.placeholder}"></textarea>
+                                </div>
+                            </div>
+
+                            <!-- Booking Summary -->
+                            <div class="summary-card">
+                                <div class="card-body">
+                                    <h5 class="summary-title">
+                                        <i class="bi bi-clipboard-check me-2"></i>
+                                        <span th:text="#{booking.summary}">Booking Summary</span>
+                                    </h5>
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="summary-item">
+                                                <span class="summary-label" th:text="#{booking.customer}">Customer:</span>
+                                                <span class="summary-value" th:text="${currentUser.firstName + ' ' + currentUser.lastName}">Customer Name</span>
+                                            </div>
+                                            <div class="summary-item">
+                                                <span class="summary-label" th:text="#{booking.email}">Email:</span>
+                                                <span class="summary-value" th:text="${currentUser.email}">customer@email.com</span>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="summary-item">
+                                                <span class="summary-label" th:text="#{booking.status}">Status:</span>
+                                                <span class="status-badge" th:text="#{status.pending}">Pending</span>
+                                            </div>
+                                            <div class="summary-item">
+                                                <span class="summary-label" th:text="#{booking.cost}">Total Cost:</span>
+                                                <span class="cost-highlight" th:text="#{booking.cost.calculated}">Will be calculated after car selection</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Action Buttons -->
+                            <div class="d-flex justify-content-between flex-wrap">
+                                <a href="/dashboard" class="btn-custom btn-cancel">
+                                    <i class="bi bi-arrow-left"></i>
+                                    <span th:text="#{button.cancel}">Cancel</span>
+                                </a>
+                                <button type="submit" class="btn-custom btn-submit">
+                                    <i class="bi bi-check-circle"></i>
+                                    <span th:text="#{button.create}">Create Booking</span>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
     // Auto-set minimum date to today
     document.addEventListener('DOMContentLoaded', function() {
         const today = new Date().toISOString().split('T')[0];
-        document.getElementById('startDate').min = today;
-        document.getElementById('endDate').min = today;
+        const startDateInput = document.getElementById('startDate');
+        const endDateInput = document.getElementById('endDate');
+
+        startDateInput.min = today;
+        endDateInput.min = today;
 
         // Update end date minimum when start date changes
-        document.getElementById('startDate').addEventListener('change', function() {
-            document.getElementById('endDate').min = this.value;
+        startDateInput.addEventListener('change', function() {
+            endDateInput.min = this.value;
+
+            // Clear end date if it's before the new start date
+            if (endDateInput.value && endDateInput.value < this.value) {
+                endDateInput.value = '';
+            }
         });
+
+        // Add smooth focus transitions
+        const inputs = document.querySelectorAll('.form-control, .form-select');
+        inputs.forEach(input => {
+            input.addEventListener('focus', function() {
+                this.parentElement.style.transform = 'scale(1.02)';
+            });
+
+            input.addEventListener('blur', function() {
+                this.parentElement.style.transform = 'scale(1)';
+            });
+        });
+
+        // Car selection change handler for future cost calculation
+        const carSelect = document.querySelector('select[name="car"]');
+        if (carSelect) {
+            carSelect.addEventListener('change', function() {
+                const selectedOption = this.options[this.selectedIndex];
+                if (selectedOption.value) {
+                    // Here you could add AJAX call to calculate total cost
+                    console.log('Car selected:', selectedOption.text);
+                }
+            });
+        }
     });
+
+    // Form validation enhancement
+    function validateForm(event) {
+        const form = event.target;
+        const startDate = form.startDate.value;
+        const endDate = form.endDate.value;
+
+        if (startDate && endDate && new Date(startDate) >= new Date(endDate)) {
+            event.preventDefault();
+            alert('End date must be after start date!');
+            return false;
+        }
+
+        return true;
+    }
+
+    document.querySelector('form').addEventListener('submit', validateForm);
 </script>
 </body>
 </html>

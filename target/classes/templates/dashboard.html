@@ -35,6 +35,11 @@
             color: #fff !important;
         }
 
+        .nav-link.active {
+            background: rgba(52, 152, 219, 0.2) !important;
+            border-radius: 8px;
+        }
+
         .main-container {
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
@@ -403,14 +408,25 @@
     </style>
 </head>
 <body>
+
+<!-- Bootstrap Navbar - taki sam jak w cars/list.html -->
 <nav class="navbar navbar-expand-lg navbar-dark">
     <div class="container">
         <a class="navbar-brand" href="/dashboard">
-            <i class="bi bi-car-front-fill me-2"></i><span th:text="#{app.title}">Car Rental Pro</span>
+            <i class="bi bi-truck me-2"></i><span th:text="#{app.title}">Car Rental Pro</span>
         </a>
         <div class="navbar-nav ms-auto">
+            <a class="nav-link active" href="/dashboard">
+                <i class="bi bi-speedometer2 me-1"></i><span th:text="#{nav.dashboard}">Dashboard</span>
+            </a>
+            <a class="nav-link" href="/cars">
+                <i class="bi bi-truck me-1"></i><span th:text="#{nav.cars}">Cars</span>
+            </a>
+            <a class="nav-link" href="/reservations">
+                <i class="bi bi-calendar-check me-1"></i><span th:text="#{nav.reservations}">Reservations</span>
+            </a>
             <span class="navbar-text me-3">
-                <i class="bi bi-person-circle me-1"></i><span th:text="#{dashboard.welcome}">Welcome</span> <span th:text="${username}">User</span>!
+                <i class="bi bi-person-circle me-1"></i><span th:text="#{nav.welcome}">Welcome</span> <span sec:authentication="name">User</span>!
             </span>
             <form th:action="@{/logout}" method="post" style="display: inline;">
                 <button type="submit" class="btn btn-outline-light">
@@ -495,8 +511,8 @@
                 </a>
             </div>
 
-            <!-- Users Card -->
-            <div class="action-card users">
+            <!-- Users Card - UKRYTE dla CUSTOMER -->
+            <div class="action-card users" sec:authorize="hasAnyRole('ADMIN', 'MANAGER')">
                 <i class="bi bi-people-fill card-icon"></i>
                 <h5 class="card-title" th:text="#{dashboard.users.title}">Users</h5>
                 <p class="card-description" th:text="#{dashboard.users.desc}">Manage users and access permissions</p>

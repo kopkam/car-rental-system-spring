@@ -45,6 +45,13 @@ public class UserService {
                 .orElseThrow(() -> new RuntimeException("Customer role not found"));
         user.setRoles(Set.of(customerRole));
 
+        // ✅ NOWA LOGIKA - Automatyczne przypisanie do managera (round-robin)
+        User assignedManager = findManagerWithLeastCustomers();
+        if (assignedManager != null) {
+            user.setManager(assignedManager);
+            System.out.println("Assigned customer " + user.getUsername() + " to manager " + assignedManager.getUsername());
+        }
+
         User savedUser = userRepository.save(user);
 
         // Create verification token
@@ -56,6 +63,34 @@ public class UserService {
         emailService.sendVerificationEmail(savedUser, token);
 
         return savedUser;
+    }
+
+    // ✅ NOWA METODA - znajdź managera z najmniejszą liczbą customerów
+    public User findManagerWithLeastCustomers() {
+        List<User> managers = findByRole("ROLE_MANAGER");
+        if (managers.isEmpty()) {
+            System.out.println("No managers found in system");
+            return null;
+        }
+
+        User managerWithLeastCustomers = managers.get(0);
+        int minCustomers = countCustomersForManager(managerWithLeastCustomers.getId());
+
+        for (User manager : managers) {
+            int customerCount = countCustomersForManager(manager.getId());
+            if (customerCount < minCustomers) {
+                minCustomers = customerCount;
+                managerWithLeastCustomers = manager;
+            }
+        }
+
+        System.out.println("Manager " + managerWithLeastCustomers.getUsername() + " has " + minCustomers + " customers");
+        return managerWithLeastCustomers;
+    }
+
+    // ✅ NOWA METODA - policz customerów dla managera
+    public int countCustomersForManager(Long managerId) {
+        return userRepository.countCustomersByManagerId(managerId);
     }
 
     public void verifyUser(String token) {
@@ -86,7 +121,49 @@ public class UserService {
         return userRepository.findAll();
     }
 
-    // ✅ NOWA METODA - znajdź użytkowników po roli
+    // ✅ ZAKTUALIZOWANA METODA - znajdź użytkowników widocznych dla danego użytkownika
+    public List<User> findUsersForCurrentUser(String currentUsername) {
+        User currentUser = findByUsername(currentUsername);
+        if (currentUser == null) {
+            return new ArrayList<>();
+        }
+
+        if (currentUser.isAdmin()) {
+            // Admin widzi wszystkich użytkowników
+            return findAll();
+        } else if (currentUser.isManager()) {
+            // Manager widzi tylko swoich customerów
+            return findCustomersByManager(currentUser.getId());
+        } else {
+            // Customer nie widzi żadnych użytkowników
+            return new ArrayList<>();
+        }
+    }
+
+    // ✅ NOWA METODA - znajdź customerów przypisanych do managera
+    public List<User> findCustomersByManager(Long managerId) {
+        return userRepository.findCustomersByManagerId(managerId);
+    }
+
+    // ✅ NOWA METODA - sprawdź czy manager może edytować użytkownika
+    public boolean canManagerEditUser(String managerUsername, Long userId) {
+        User manager = findByUsername(managerUsername);
+        if (manager == null || !manager.isManager()) {
+            return false;
+        }
+
+        User userToEdit = findById(userId);
+        if (userToEdit == null) {
+            return false;
+        }
+
+        // Manager może edytować tylko swoich customerów
+        return userToEdit.isCustomer() &&
+                userToEdit.getManager() != null &&
+                userToEdit.getManager().getId().equals(manager.getId());
+    }
+
+    // ✅ ZAKTUALIZOWANA METODA - znajdź użytkowników po roli
     public List<User> findByRole(String roleName) {
         try {
             Role.RoleName roleNameEnum = Role.RoleName.valueOf(roleName);
@@ -98,6 +175,11 @@ public class UserService {
     }
 
     public User createUser(User user, Set<String> roleNames) {
+        return createUser(user, roleNames, null);  // Dla kompatybilności wstecznej
+    }
+
+    // ✅ NOWA PRZECIĄŻONA METODA z logiką przypisywania managera
+    public User createUser(User user, Set<String> roleNames, User createdBy) {
         // Check if username or email already exists
         if (userRepository.existsByUsername(user.getUsername())) {
             throw new RuntimeException("Username already exists");
@@ -125,6 +207,23 @@ public class UserService {
             roles.add(customerRole);
         }
         user.setRoles(roles);
+
+        // ✅ NOWA LOGIKA PRZYPISYWANIA MANAGERA
+        boolean isCustomer = roleNames != null && roleNames.contains("ROLE_CUSTOMER");
+        if (isCustomer) {
+            if (createdBy != null && createdBy.isManager()) {
+                // Jeśli manager tworzy customera, przypisz go do siebie
+                user.setManager(createdBy);
+                System.out.println("Manager " + createdBy.getUsername() + " created customer " + user.getUsername() + " - assigned to self");
+            } else {
+                // Jeśli admin tworzy customera, użyj round-robin
+                User assignedManager = findManagerWithLeastCustomers();
+                if (assignedManager != null) {
+                    user.setManager(assignedManager);
+                    System.out.println("Admin created customer " + user.getUsername() + " - assigned to manager " + assignedManager.getUsername());
+                }
+            }
+        }
 
         // Enable user by default for admin-created users
         user.setEnabled(true);
@@ -159,6 +258,15 @@ public class UserService {
                     })
                     .collect(Collectors.toSet());
             existingUser.setRoles(roles);
+
+            // ✅ NOWA LOGIKA - Jeśli zmieniamy rolę na customer, przypisz managera
+            boolean isCustomer = roleNames.contains("ROLE_CUSTOMER");
+            if (isCustomer && existingUser.getManager() == null) {
+                User assignedManager = findManagerWithLeastCustomers();
+                if (assignedManager != null) {
+                    existingUser.setManager(assignedManager);
+                }
+            }
         }
 
         return userRepository.save(existingUser);
@@ -184,5 +292,31 @@ public class UserService {
     // ✅ POMOCNICZA METODA - sprawdza czy user istnieje po email
     public boolean existsByEmail(String email) {
         return userRepository.existsByEmail(email);
+    }
+
+    // ✅ NOWA METODA - przypisz customera do managera ręcznie (dla admina)
+    public void assignCustomerToManager(Long customerId, Long managerId) {
+        User customer = findById(customerId);
+        User manager = findById(managerId);
+
+        if (customer != null && manager != null &&
+                customer.isCustomer() && manager.isManager()) {
+            customer.setManager(manager);
+            userRepository.save(customer);
+        }
+    }
+
+    // ✅ NOWA METODA - usuń przypisanie customera od managera
+    public void removeCustomerFromManager(Long customerId) {
+        User customer = findById(customerId);
+        if (customer != null && customer.isCustomer()) {
+            customer.setManager(null);
+            userRepository.save(customer);
+        }
+    }
+
+    // ✅ NOWA METODA - znajdź customerów bez managera
+    public List<User> findCustomersWithoutManager() {
+        return userRepository.findCustomersWithoutManager();
     }
 }

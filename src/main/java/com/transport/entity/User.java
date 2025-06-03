@@ -57,6 +57,16 @@ public class User {
     @OneToMany(mappedBy = "manager", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private Set<Car> managedCars;
 
+    // ✅ NOWA RELACJA - Manager-Customer
+    // Jeśli user jest customerem, to ma przypisanego managera
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "manager_id")
+    private User manager;
+
+    // Jeśli user jest managerem, to ma listę customerów
+    @OneToMany(mappedBy = "manager", fetch = FetchType.LAZY)
+    private Set<User> customers;
+
     // Constructors, getters, setters
     public User() {}
 
@@ -106,14 +116,41 @@ public class User {
     public Set<Car> getManagedCars() { return managedCars; }
     public void setManagedCars(Set<Car> managedCars) { this.managedCars = managedCars; }
 
+    // ✅ NOWE GETTERY I SETTERY dla Manager-Customer relacji
+    public User getManager() { return manager; }
+    public void setManager(User manager) { this.manager = manager; }
+
+    public Set<User> getCustomers() { return customers; }
+    public void setCustomers(Set<User> customers) { this.customers = customers; }
+
     // ✅ POMOCNICZA METODA - sprawdza czy user ma określoną rolę
     public boolean hasRole(String roleName) {
         return roles != null && roles.stream()
                 .anyMatch(role -> role.getName().name().equals(roleName));
     }
 
+    // ✅ POMOCNICZE METODY dla ról
+    public boolean isAdmin() {
+        return hasRole("ROLE_ADMIN");
+    }
+
+    public boolean isManager() {
+        return hasRole("ROLE_MANAGER");
+    }
+
+    public boolean isCustomer() {
+        return hasRole("ROLE_CUSTOMER");
+    }
+
     // ✅ POMOCNICZA METODA - zwraca pełne imię
     public String getFullName() {
         return firstName + " " + lastName;
+    }
+
+    // ✅ POMOCNICZA METODA - zwraca inicjały dla avatara
+    public String getInitials() {
+        String f = (firstName != null && !firstName.isEmpty()) ? firstName.substring(0, 1) : "";
+        String l = (lastName != null && !lastName.isEmpty()) ? lastName.substring(0, 1) : "";
+        return (f + l).toUpperCase();
     }
 }
