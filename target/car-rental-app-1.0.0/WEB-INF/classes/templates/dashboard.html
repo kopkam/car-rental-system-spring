@@ -444,12 +444,12 @@
             <h1><i class="bi bi-speedometer2 me-3"></i><span th:text="#{dashboard.title}">Dashboard</span></h1>
             <p class="welcome-text mb-0">
                 <span th:text="#{dashboard.welcome}">Welcome</span> <strong th:text="${username}">User</strong>!
-                Manage your car rental business with ease.
+                <span th:text="#{dashboard.subtitle}">Manage your car rental business with ease.</span>
             </p>
         </div>
 
-        <!-- Success Banner -->
-        <div class="alert success-banner border-0">
+        <!-- Success Banner - tylko przy pierwszym logowaniu -->
+        <div th:if="${loginSuccess}" class="alert success-banner border-0">
             <div class="d-flex align-items-center">
                 <i class="bi bi-check-circle-fill me-3 fs-3"></i>
                 <div>
@@ -485,7 +485,7 @@
             <div class="info-item">
                 <i class="bi bi-shield-check"></i>
                 <span class="info-label" th:text="#{dashboard.roles}">Roles:</span>
-                <span class="role-badge" th:text="${userRoles}">CUSTOMER</span>
+                <span class="role-badge" th:text="${userRolesTranslated}">CUSTOMER</span>
             </div>
         </div>
 

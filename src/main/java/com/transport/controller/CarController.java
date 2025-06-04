@@ -11,6 +11,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import jakarta.validation.Valid;
@@ -74,8 +75,12 @@ public class CarController {
 
     @PostMapping("/add")
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
-    public String addCar(@Valid @ModelAttribute Car car, BindingResult result,
-                         Authentication auth, Model model, RedirectAttributes redirectAttributes) {
+    public String addCar(@Valid @ModelAttribute Car car,
+                         BindingResult result,
+                         @RequestParam(value = "imageFile", required = false) MultipartFile imageFile,
+                         Authentication auth,
+                         Model model,
+                         RedirectAttributes redirectAttributes) {
         if (result.hasErrors()) {
             String username = auth.getName();
             User currentUser = userService.findByUsername(username);
@@ -93,8 +98,8 @@ public class CarController {
             String username = auth.getName();
             User currentUser = userService.findByUsername(username);
 
-            // Użyj nowej metody z userem - automatycznie przypisze managera
-            carService.saveCar(car, currentUser);
+            // Użyj nowej metody z userem i plikiem obrazu
+            carService.saveCar(car, currentUser, imageFile);
 
             redirectAttributes.addFlashAttribute("success", "Car added successfully!");
             return "redirect:/cars";
@@ -136,8 +141,12 @@ public class CarController {
 
     @PostMapping("/edit/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
-    public String updateCar(@PathVariable Long id, @Valid @ModelAttribute Car car,
-                            BindingResult result, Authentication auth, Model model,
+    public String updateCar(@PathVariable Long id,
+                            @Valid @ModelAttribute Car car,
+                            BindingResult result,
+                            @RequestParam(value = "imageFile", required = false) MultipartFile imageFile,
+                            Authentication auth,
+                            Model model,
                             RedirectAttributes redirectAttributes) {
         if (result.hasErrors()) {
             String username = auth.getName();
@@ -167,15 +176,45 @@ public class CarController {
 
             car.setId(id);
 
-            // Zachowaj managera jeśli nie został zmieniony (dla managerów)
+            // ✅ POPRAWKA - Logika zarządzania managerem
             if (currentUser.hasRole("ROLE_MANAGER")) {
+                // Manager może edytować tylko swoje auta - przypisz siebie
                 car.setManager(currentUser);
+            } else if (currentUser.hasRole("ROLE_ADMIN")) {
+                // Admin może:
+                // 1. Przypisać managera (jeśli wybrano z selecta)
+                // 2. Pozostawić bez managera (jeśli nie wybrano)
+                // 3. Zachować istniejącego managera (jeśli nie zmieniono)
+
+                // Jeśli manager.id jest null lub pusty w formularzu, znaczy że admin wybrał "No Manager"
+                if (car.getManager() == null || car.getManager().getId() == null) {
+                    car.setManager(null); // Usuń managera - auto będzie zarządzane przez admina
+                } else {
+                    // Admin wybrał konkretnego managera z listy
+                    User selectedManager = userService.findById(car.getManager().getId());
+                    car.setManager(selectedManager);
+                }
             }
 
-            carService.saveCar(car);
+            // Jeśli nie ma nowego obrazu, zachowaj stary
+            if (imageFile == null || imageFile.isEmpty()) {
+                car.setImageUrl(existingCar.getImageUrl());
+            }
+
+            // ✅ DEBUG - dodaj tymczasowo
+            System.out.println("=== UPDATE CAR DEBUG ===");
+            System.out.println("Car ID: " + car.getId());
+            System.out.println("Car Brand: " + car.getBrand());
+            System.out.println("Car Manager: " + (car.getManager() != null ? car.getManager().getUsername() : "NULL"));
+            System.out.println("Current User: " + currentUser.getUsername());
+            System.out.println("Current User Role: " + (currentUser.hasRole("ROLE_ADMIN") ? "ADMIN" : "MANAGER"));
+
+            carService.saveCar(car, currentUser, imageFile);
             redirectAttributes.addFlashAttribute("success", "Car updated successfully!");
             return "redirect:/cars";
         } catch (Exception e) {
+            System.out.println("❌ ERROR updating car: " + e.getMessage());
+            e.printStackTrace();
             redirectAttributes.addFlashAttribute("error", "Error updating car: " + e.getMessage());
             return "redirect:/cars/edit/" + id;
         }

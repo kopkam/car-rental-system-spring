@@ -8,7 +8,6 @@ import java.math.BigDecimal;
 import java.util.Set;
 import java.time.LocalDateTime;
 
-
 @Entity
 @Table(name = "cars")
 public class Car {
@@ -40,6 +39,10 @@ public class Car {
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
+    // ✅ NOWE POLE - URL do zdjęcia samochodu
+    @Column(name = "image_url")
+    private String imageUrl;
+
     @ManyToOne
     @JoinColumn(name = "manager_id")
     private User manager;
@@ -51,7 +54,7 @@ public class Car {
         AVAILABLE, RENTED, MAINTENANCE
     }
 
-    // Constructors, getters, setters
+    // Constructors
     public Car() {}
 
     public Car(String brand, String model, Integer year, String licensePlate, BigDecimal dailyRate) {
@@ -62,7 +65,7 @@ public class Car {
         this.dailyRate = dailyRate;
     }
 
-    // Getters and setters...
+    // Getters and setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
@@ -90,6 +93,10 @@ public class Car {
     public Set<Booking> getBookings() { return bookings; }
     public void setBookings(Set<Booking> bookings) { this.bookings = bookings; }
 
-    public LocalDateTime getCreatedAt() { return createdAt;}
-    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt;}
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+
+    // ✅ NOWY GETTER/SETTER dla imageUrl
+    public String getImageUrl() { return imageUrl; }
+    public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
 }

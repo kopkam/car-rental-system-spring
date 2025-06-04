@@ -4,19 +4,46 @@ import com.transport.entity.Car;
 import com.transport.entity.User;
 import com.transport.repository.CarRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import jakarta.annotation.PostConstruct;
+import java.io.IOException;
 import java.math.BigDecimal;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 public class CarService {
 
     @Autowired
     private CarRepository carRepository;
+
+    @Value("${app.upload.dir:uploads/cars/}")
+    private String uploadDir;
+
+    @PostConstruct
+    public void initUploadDirectory() {
+        try {
+            Path uploadPath = Paths.get(uploadDir);
+            if (!Files.exists(uploadPath)) {
+                Files.createDirectories(uploadPath);
+                System.out.println("✅ Created upload directory: " + uploadPath.toAbsolutePath());
+            } else {
+                System.out.println("📁 Upload directory exists: " + uploadPath.toAbsolutePath());
+            }
+        } catch (Exception e) {
+            System.err.println("❌ Failed to create upload directory: " + e.getMessage());
+        }
+    }
 
     public List<Car> getAllCars() {
         try {
@@ -35,51 +62,123 @@ public class CarService {
         return carRepository.save(car);
     }
 
-    // ✅ METODA SAVE Z WALIDACJĄ - używana przy tworzeniu/edycji aut
+    // ✅ NOWA METODA SAVE Z PLIKIEM OBRAZU - główna metoda używana przez kontroler
     @Transactional
-    public Car saveCar(Car car, User currentUser) {
-        try {
-            System.out.println("=== SAVING CAR ===");
-            System.out.println("Car: " + car);
-            System.out.println("Current user: " + currentUser.getUsername());
+    public Car saveCar(Car car, User currentUser, MultipartFile imageFile) {
+        System.out.println("=== SAVING CAR ===");
+        System.out.println("Car: " + car);
+        System.out.println("Current user: " + currentUser.getUsername());
 
-            // Check for duplicate license plate
-            if (car.getId() == null) { // New car
+        try {
+            // Walidacja czy już istnieje samochód z taką tablicą rejestracyjną
+            if (car.getId() == null) { // tylko dla nowych aut
                 Car existingCar = carRepository.findByLicensePlate(car.getLicensePlate());
                 if (existingCar != null) {
-                    throw new RuntimeException("Car with license plate " + car.getLicensePlate() + " already exists");
-                }
-                // Set createdAt for new cars
-                car.setCreatedAt(LocalDateTime.now());
-
-                // Przypisz managera automatycznie jeśli user jest managerem
-                if (currentUser.getRoles().stream().anyMatch(role -> role.getName().name().equals("ROLE_MANAGER"))) {
-                    car.setManager(currentUser);
-                    System.out.println("Auto assigned to manager: " + currentUser.getUsername());
-                }
-                // Jeśli admin nie przypisał managera, zostaw puste
-            } else { // Updating existing car
-                Car existingCar = carRepository.findByLicensePlate(car.getLicensePlate());
-                if (existingCar != null && !existingCar.getId().equals(car.getId())) {
-                    throw new RuntimeException("Another car with license plate " + car.getLicensePlate() + " already exists");
+                    throw new RuntimeException("Car with license plate " + car.getLicensePlate() + " already exists!");
                 }
             }
 
-            Car savedCar = carRepository.save(car);
-            System.out.println("Car saved with ID: " + savedCar.getId());
-            return savedCar;
+            // Ustaw managera
+            if (currentUser.hasRole("ROLE_ADMIN") && car.getManager() == null) {
+                // Admin może nie ustawiać managera - wtedy zostanie null
+            } else if (currentUser.hasRole("ROLE_MANAGER")) {
+                car.setManager(currentUser);
+            }
 
-        } catch (Exception e) {
-            System.err.println("Error saving car: " + e.getMessage());
-            e.printStackTrace();
-            throw e;
+            // Obsługa obrazu
+            if (imageFile != null && !imageFile.isEmpty()) {
+                System.out.println("Image file: " + imageFile.getOriginalFilename());
+
+                // Sprawdź typ pliku
+                String contentType = imageFile.getContentType();
+                if (contentType == null || !contentType.startsWith("image/")) {
+                    throw new RuntimeException("Please upload a valid image file!");
+                }
+
+                // Generuj unikalną nazwę pliku
+                String fileExtension = getFileExtension(imageFile.getOriginalFilename());
+                String uniqueFilename = UUID.randomUUID().toString() + fileExtension;
+
+                // Przygotuj katalog - POPRAWKA: używaj uploadDir zamiast UPLOAD_DIR
+                Path uploadPath = Paths.get(uploadDir);
+                if (!Files.exists(uploadPath)) {
+                    Files.createDirectories(uploadPath);
+                }
+
+                // Zapisz plik
+                Path filePath = uploadPath.resolve(uniqueFilename);
+                Files.copy(imageFile.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+
+                System.out.printf("📁 Image saved to: %s%n", filePath.toAbsolutePath());
+                System.out.printf("🖼️ Saved image: %s%n", uniqueFilename);
+
+                // ⚠️ WAŻNE: Zapisz tylko URL względny, nie pełną ścieżkę!
+                car.setImageUrl("/images/cars/" + uniqueFilename);
+            }
+
+            // Ustaw datę utworzenia dla nowych aut
+            if (car.getCreatedAt() == null) {
+                car.setCreatedAt(LocalDateTime.now());
+            }
+
+            // Zapisz do bazy
+            Car savedCar = carRepository.save(car);
+            System.out.println("Car saved with ID: " + savedCar.getId() +
+                    (savedCar.getImageUrl() != null ? " (Image: " +
+                            savedCar.getImageUrl().substring(savedCar.getImageUrl().lastIndexOf("/") + 1) + ")" : ""));
+
+            return savedCar;
+        } catch (IOException e) {
+            System.err.println("❌ Error saving image: " + e.getMessage());
+            throw new RuntimeException("Failed to save image: " + e.getMessage(), e);
         }
+    }
+
+    private String getFileExtension(String filename) {
+        if (filename == null || filename.lastIndexOf('.') == -1) {
+            return ".jpg"; // domyślne rozszerzenie
+        }
+        return filename.substring(filename.lastIndexOf('.'));
+    }
+
+    // ✅ METODA SAVE Z WALIDACJĄ - dla kompatybilności wstecznej (bez pliku)
+    @Transactional
+    public Car saveCar(Car car, User currentUser) {
+        return saveCar(car, currentUser, null);
     }
 
     // ✅ PRZECIĄŻONA METODA - dla przypadków gdy nie mamy usera
     @Transactional
     public Car saveCar(Car car) {
         return carRepository.save(car);
+    }
+
+    private String saveImage(MultipartFile file) throws IOException {
+        // Sprawdź typ pliku
+        String contentType = file.getContentType();
+        if (contentType == null || !contentType.startsWith("image/")) {
+            throw new IOException("File is not an image");
+        }
+
+        // Generuj unikalną nazwę pliku
+        String originalFilename = file.getOriginalFilename();
+        String extension = "";
+        if (originalFilename != null && originalFilename.contains(".")) {
+            extension = originalFilename.substring(originalFilename.lastIndexOf("."));
+        }
+
+        String filename = UUID.randomUUID().toString() + extension;
+
+        // Zapisz plik
+        Path uploadPath = Paths.get(uploadDir);
+        Path filePath = uploadPath.resolve(filename);
+
+        Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+
+        System.out.println("📸 Image saved to: " + filePath.toAbsolutePath());
+
+        // Zwróć tylko nazwę pliku (bez ścieżki)
+        return filename;
     }
 
     public List<Car> getAvailableCars() {
@@ -123,6 +222,19 @@ public class CarService {
 
                 if (activeBookings > 0) {
                     throw new RuntimeException("Cannot delete car with active bookings");
+                }
+            }
+
+            // Usuń plik obrazu jeśli istnieje - POPRAWIONE: usunięcie niepotrzebnej logiki
+            if (car.getImageUrl() != null && !car.getImageUrl().isEmpty()) {
+                try {
+                    // Wyciągnij nazwę pliku z URL
+                    String filename = car.getImageUrl().substring(car.getImageUrl().lastIndexOf("/") + 1);
+                    Path imagePath = Paths.get(uploadDir).resolve(filename);
+                    Files.deleteIfExists(imagePath);
+                    System.out.println("🗑️ Deleted image: " + imagePath);
+                } catch (Exception e) {
+                    System.err.println("⚠️ Failed to delete image: " + e.getMessage());
                 }
             }
 

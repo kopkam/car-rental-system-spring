@@ -3,122 +3,460 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Car Rental - Add Car</title>
+    <title th:text="#{cars.add.title}">Car Rental - Add Car</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --accent-color: #e74c3c;
+            --success-color: #27ae60;
+            --warning-color: #f39c12;
+            --background-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        body {
+            background: var(--background-gradient);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .navbar {
+            background: rgba(44, 62, 80, 0.95) !important;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 2px 20px rgba(0,0,0,0.1);
+        }
+
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 1.5rem;
+            color: #fff !important;
+        }
+
+        .main-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            margin-top: 2rem;
+            padding: 2rem;
+        }
+
+        .page-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 15px;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .page-header h1 {
+            font-weight: 700;
+            margin: 0;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .form-card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            border: none;
+            overflow: hidden;
+        }
+
+        .form-label {
+            font-weight: 600;
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+        }
+
+        .form-control, .form-select {
+            border-radius: 10px;
+            border: 2px solid #e9ecef;
+            padding: 12px 15px;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: var(--secondary-color);
+            box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
+        }
+
+        .btn-custom {
+            border-radius: 10px;
+            font-weight: 600;
+            padding: 12px 30px;
+            transition: all 0.3s ease;
+            border: none;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-primary-custom {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
+        }
+
+        .btn-primary-custom:hover {
+            background: linear-gradient(135deg, #2980b9, #1c5a7e);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(52, 152, 219, 0.4);
+            color: white;
+        }
+
+        .btn-secondary-custom {
+            background: linear-gradient(135deg, #95a5a6, #7f8c8d);
+            color: white;
+            box-shadow: 0 4px 15px rgba(149, 165, 166, 0.3);
+        }
+
+        .btn-secondary-custom:hover {
+            background: linear-gradient(135deg, #7f8c8d, #6c7b7d);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(149, 165, 166, 0.4);
+            color: white;
+        }
+
+        .alert {
+            border-radius: 15px;
+            border: none;
+            padding: 1rem 1.5rem;
+            margin-bottom: 1.5rem;
+            font-weight: 500;
+        }
+
+        .alert-info {
+            background: linear-gradient(135deg, rgba(52, 152, 219, 0.1), rgba(41, 128, 185, 0.1));
+            color: var(--secondary-color);
+            border-left: 4px solid var(--secondary-color);
+        }
+
+        .image-preview-container {
+            border: 2px dashed #dee2e6;
+            border-radius: 15px;
+            padding: 2rem;
+            text-align: center;
+            background: #f8f9fa;
+            transition: all 0.3s ease;
+            position: relative;
+            min-height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+        }
+
+        .image-preview-container:hover {
+            border-color: var(--secondary-color);
+            background: rgba(52, 152, 219, 0.05);
+        }
+
+        .image-preview-container.dragover {
+            border-color: var(--secondary-color);
+            background: rgba(52, 152, 219, 0.1);
+        }
+
+        .image-preview {
+            max-width: 100%;
+            max-height: 200px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            display: none;
+        }
+
+        .upload-icon {
+            font-size: 3rem;
+            color: #dee2e6;
+            margin-bottom: 1rem;
+        }
+
+        .upload-text {
+            color: #6c757d;
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .upload-subtext {
+            color: #adb5bd;
+            font-size: 0.9rem;
+        }
+
+        .file-info {
+            display: none;
+            margin-top: 1rem;
+            padding: 10px;
+            background: rgba(39, 174, 96, 0.1);
+            border-radius: 8px;
+            color: var(--success-color);
+        }
+
+        .required-field::after {
+            content: " *";
+            color: var(--accent-color);
+            font-weight: bold;
+        }
+
+        @media (max-width: 768px) {
+            .main-container {
+                margin: 1rem;
+                padding: 1rem;
+            }
+
+            .page-header {
+                text-align: center;
+            }
+        }
+    </style>
 </head>
 <body>
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+<nav class="navbar navbar-expand-lg navbar-dark">
     <div class="container">
-        <a class="navbar-brand" href="/dashboard">Car Rental</a>
+        <a class="navbar-brand" href="/dashboard">
+            <i class="bi bi-truck me-2"></i><span th:text="#{app.title}">Car Rental Pro</span>
+        </a>
         <div class="navbar-nav ms-auto">
-            <a class="nav-link" href="/cars">Back to Cars</a>
-            <a class="btn btn-outline-light" href="/logout">Logout</a>
+            <a class="nav-link" href="/dashboard">
+                <i class="bi bi-speedometer2 me-1"></i><span th:text="#{nav.dashboard}">Dashboard</span>
+            </a>
+            <a class="nav-link" href="/cars">
+                <i class="bi bi-truck me-1"></i><span th:text="#{nav.cars}">Cars</span>
+            </a>
+            <a class="nav-link" href="/reservations">
+                <i class="bi bi-calendar-check me-1"></i><span th:text="#{nav.reservations}">Reservations</span>
+            </a>
+            <span class="navbar-text me-3">
+                <i class="bi bi-person-circle me-1"></i><span th:text="#{nav.welcome}">Welcome</span> <span sec:authentication="name">User</span>!
+            </span>
+            <form th:action="@{/logout}" method="post" style="display: inline;">
+                <button type="submit" class="btn btn-outline-light">
+                    <i class="bi bi-box-arrow-right me-1"></i><span th:text="#{nav.logout}">Logout</span>
+                </button>
+            </form>
         </div>
     </div>
 </nav>
 
-<div class="container mt-4">
-    <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="card">
-                <div class="card-header">
-                    <h3><i class="bi bi-plus-circle"></i> Add New Car</h3>
+<div class="container">
+    <div class="main-container">
+        <!-- Page Header -->
+        <div class="page-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1><i class="bi bi-plus-circle me-3"></i><span th:text="#{cars.add.title}">Add New Car</span></h1>
+                    <p class="mb-0 opacity-75" th:text="#{cars.add.subtitle}">Add a new vehicle to your fleet</p>
                 </div>
-                <div class="card-body">
-                    <form th:object="${car}" th:action="@{/cars/add}" method="post">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="brand" class="form-label">Brand *</label>
-                                    <input type="text" class="form-control" th:field="*{brand}" required>
-                                    <div th:if="${#fields.hasErrors('brand')}" class="text-danger" th:errors="*{brand}"></div>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="model" class="form-label">Model *</label>
-                                    <input type="text" class="form-control" th:field="*{model}" required>
-                                    <div th:if="${#fields.hasErrors('model')}" class="text-danger" th:errors="*{model}"></div>
-                                </div>
-                            </div>
-                        </div>
+            </div>
+        </div>
 
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="year" class="form-label">Year *</label>
-                                    <input type="number" class="form-control" th:field="*{year}" min="1990" max="2025" required>
-                                    <div th:if="${#fields.hasErrors('year')}" class="text-danger" th:errors="*{year}"></div>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="licensePlate" class="form-label">License Plate *</label>
-                                    <input type="text" class="form-control" th:field="*{licensePlate}" required>
-                                    <div th:if="${#fields.hasErrors('licensePlate')}" class="text-danger" th:errors="*{licensePlate}"></div>
-                                </div>
-                            </div>
-                        </div>
+        <!-- Form Card -->
+        <div class="card form-card">
+            <div class="card-body p-4">
+                <form th:object="${car}" th:action="@{/cars/add}" method="post" enctype="multipart/form-data">
 
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="dailyRate" class="form-label">Daily Rate (PLN) *</label>
-                                    <input type="number" class="form-control" th:field="*{dailyRate}" step="0.01" min="0" required>
-                                    <div th:if="${#fields.hasErrors('dailyRate')}" class="text-danger" th:errors="*{dailyRate}"></div>
-                                </div>
+                    <!-- ✅ NOWA SEKCJA - Upload zdjęcia -->
+                    <div class="mb-4">
+                        <label for="imageFile" class="form-label">
+                            <i class="bi bi-camera me-2"></i><span th:text="#{cars.image}">Car Image</span>
+                        </label>
+                        <div class="image-preview-container" id="imagePreviewContainer">
+                            <div class="upload-content">
+                                <i class="bi bi-cloud-upload upload-icon"></i>
+                                <div class="upload-text" th:text="#{cars.image.upload}">Drag & drop an image or click to browse</div>
+                                <div class="upload-subtext" th:text="#{cars.image.formats}">PNG, JPG, JPEG up to 5MB</div>
                             </div>
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="status" class="form-label">Status *</label>
-                                    <select class="form-select" th:field="*{status}" required>
-                                        <option value="">Select Status</option>
-                                        <option value="AVAILABLE">Available</option>
-                                        <option value="RENTED">Rented</option>
-                                        <option value="MAINTENANCE">Maintenance</option>
-                                    </select>
-                                    <div th:if="${#fields.hasErrors('status')}" class="text-danger" th:errors="*{status}"></div>
-                                </div>
+                            <img id="imagePreview" class="image-preview" alt="Preview">
+                            <div class="file-info" id="fileInfo">
+                                <i class="bi bi-check-circle me-1"></i>
+                                <span id="fileName"></span>
                             </div>
                         </div>
+                        <input type="file" class="form-control d-none" id="imageFile" name="imageFile"
+                               accept="image/*" onchange="previewImage(this)">
+                    </div>
 
-                        <!-- ✅ NOWE POLE - Manager Selection (tylko dla adminów) -->
-                        <div sec:authorize="hasRole('ROLE_ADMIN')" class="mb-3">
-                            <label for="manager" class="form-label">Assign to Manager</label>
-                            <select class="form-select" th:field="*{manager.id}" id="manager">
-                                <option value="">-- No Manager (Admin managed) --</option>
-                                <option th:each="manager : ${managers}"
-                                        th:value="${manager.id}"
-                                        th:text="${manager.firstName + ' ' + manager.lastName + ' (' + manager.username + ')'}">
-                                    Manager Name
-                                </option>
-                            </select>
-                            <small class="form-text text-muted">Select a manager to assign this car to, or leave empty for admin management.</small>
-                        </div>
-
-                        <!-- ✅ INFO dla managerów -->
-                        <div sec:authorize="hasRole('ROLE_MANAGER')" class="mb-3">
-                            <div class="alert alert-info">
-                                <i class="bi bi-info-circle"></i> This car will be automatically assigned to you as the manager.
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="brand" class="form-label required-field" th:text="#{cars.brand}">Brand</label>
+                                <input type="text" class="form-control" th:field="*{brand}" required>
+                                <div th:if="${#fields.hasErrors('brand')}" class="text-danger mt-1" th:errors="*{brand}"></div>
                             </div>
                         </div>
-
-                        <div class="d-flex justify-content-between">
-                            <a href="/cars" class="btn btn-secondary">
-                                <i class="bi bi-arrow-left"></i> Cancel
-                            </a>
-                            <button type="submit" class="btn btn-primary">
-                                <i class="bi bi-check-circle"></i> Add Car
-                            </button>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="model" class="form-label required-field" th:text="#{cars.model}">Model</label>
+                                <input type="text" class="form-control" th:field="*{model}" required>
+                                <div th:if="${#fields.hasErrors('model')}" class="text-danger mt-1" th:errors="*{model}"></div>
+                            </div>
                         </div>
-                    </form>
-                </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="year" class="form-label required-field" th:text="#{cars.year}">Year</label>
+                                <input type="number" class="form-control" th:field="*{year}" min="1990" max="2025" required>
+                                <div th:if="${#fields.hasErrors('year')}" class="text-danger mt-1" th:errors="*{year}"></div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="licensePlate" class="form-label required-field" th:text="#{cars.license_plate}">License Plate</label>
+                                <input type="text" class="form-control" th:field="*{licensePlate}" required>
+                                <div th:if="${#fields.hasErrors('licensePlate')}" class="text-danger mt-1" th:errors="*{licensePlate}"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="dailyRate" class="form-label required-field" th:text="#{cars.daily_rate}">Daily Rate (PLN)</label>
+                                <input type="number" class="form-control" th:field="*{dailyRate}" step="0.01" min="0" required>
+                                <div th:if="${#fields.hasErrors('dailyRate')}" class="text-danger mt-1" th:errors="*{dailyRate}"></div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="status" class="form-label required-field" th:text="#{cars.status}">Status</label>
+                                <select class="form-select" th:field="*{status}" required>
+                                    <option value="" th:text="#{cars.select_status}">Select Status</option>
+                                    <option value="AVAILABLE" th:text="#{cars.status.available}">Available</option>
+                                    <option value="RENTED" th:text="#{cars.status.rented}">Rented</option>
+                                    <option value="MAINTENANCE" th:text="#{cars.status.maintenance}">Maintenance</option>
+                                </select>
+                                <div th:if="${#fields.hasErrors('status')}" class="text-danger mt-1" th:errors="*{status}"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Manager Selection (tylko dla adminów) -->
+                    <div sec:authorize="hasRole('ROLE_ADMIN')" class="mb-3">
+                        <label for="manager" class="form-label">
+                            <i class="bi bi-person-badge me-2"></i><span th:text="#{cars.assign_manager}">Assign to Manager</span>
+                        </label>
+                        <select class="form-select" th:field="*{manager.id}" id="manager">
+                            <option value="" th:text="#{cars.no_manager}">-- No Manager (Admin managed) --</option>
+                            <option th:each="manager : ${managers}"
+                                    th:value="${manager.id}"
+                                    th:text="${manager.firstName + ' ' + manager.lastName + ' (' + manager.username + ')'}">
+                                Manager Name
+                            </option>
+                        </select>
+                        <small class="form-text text-muted" th:text="#{cars.manager_help}">Select a manager to assign this car to, or leave empty for admin management.</small>
+                    </div>
+
+                    <!-- Info dla managerów -->
+                    <div sec:authorize="hasRole('ROLE_MANAGER')" class="mb-3">
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle me-2"></i><span th:text="#{cars.manager_info}">This car will be automatically assigned to you as the manager.</span>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="d-flex justify-content-between pt-3">
+                        <a href="/cars" class="btn btn-custom btn-secondary-custom">
+                            <i class="bi bi-arrow-left me-2"></i><span th:text="#{cars.cancel}">Cancel</span>
+                        </a>
+                        <button type="submit" class="btn btn-custom btn-primary-custom">
+                            <i class="bi bi-check-circle me-2"></i><span th:text="#{cars.add_car}">Add Car</span>
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // ✅ FUNKCJE DO PREVIEW ZDJĘĆ
+    function previewImage(input) {
+        const file = input.files[0];
+        const preview = document.getElementById('imagePreview');
+        const container = document.getElementById('imagePreviewContainer');
+        const fileInfo = document.getElementById('fileInfo');
+        const fileName = document.getElementById('fileName');
+        const uploadContent = container.querySelector('.upload-content');
+
+        if (file) {
+            // Sprawdź rozmiar pliku (5MB = 5 * 1024 * 1024 bytes)
+            if (file.size > 5 * 1024 * 1024) {
+                alert('File size must be less than 5MB');
+                input.value = '';
+                return;
+            }
+
+            // Sprawdź typ pliku
+            if (!file.type.startsWith('image/')) {
+                alert('Please select an image file');
+                input.value = '';
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                preview.src = e.target.result;
+                preview.style.display = 'block';
+                uploadContent.style.display = 'none';
+                fileInfo.style.display = 'block';
+                fileName.textContent = file.name;
+            };
+            reader.readAsDataURL(file);
+        } else {
+            preview.style.display = 'none';
+            uploadContent.style.display = 'block';
+            fileInfo.style.display = 'none';
+        }
+    }
+
+    // Drag & Drop functionality
+    document.addEventListener('DOMContentLoaded', function() {
+        const container = document.getElementById('imagePreviewContainer');
+        const fileInput = document.getElementById('imageFile');
+
+        // Click to upload
+        container.addEventListener('click', function() {
+            fileInput.click();
+        });
+
+        // Drag & Drop events
+        container.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            container.classList.add('dragover');
+        });
+
+        container.addEventListener('dragleave', function(e) {
+            e.preventDefault();
+            container.classList.remove('dragover');
+        });
+
+        container.addEventListener('drop', function(e) {
+            e.preventDefault();
+            container.classList.remove('dragover');
+
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                fileInput.files = files;
+                previewImage(fileInput);
+            }
+        });
+
+        // Form animation
+        const formCard = document.querySelector('.form-card');
+        formCard.style.opacity = '0';
+        formCard.style.transform = 'translateY(30px)';
+        formCard.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+
+        setTimeout(() => {
+            formCard.style.opacity = '1';
+            formCard.style.transform = 'translateY(0)';
+        }, 100);
+    });
+</script>
 </body>
 </html>
