@@ -33,13 +33,11 @@ public class WebConfig implements WebMvcConfigurer {
         registry.addInterceptor(localeChangeInterceptor());
     }
 
-    // ✅ DODANA METODA - mapowanie dla obrazków samochodów
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
-        // Mapowanie dla uploadowanych zdjęć samochodów
         registry.addResourceHandler("/images/cars/**")
                 .addResourceLocations("file:uploads/cars/");
 
-        System.out.println("✅ Static resource handler configured: /images/cars/** -> file:uploads/cars/");
+        System.out.println("Static resource handler configured: /images/cars/** -> file:uploads/cars/");
     }
 }

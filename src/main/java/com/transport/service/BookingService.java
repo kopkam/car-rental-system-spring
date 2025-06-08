@@ -13,6 +13,8 @@ import java.math.BigDecimal;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.UUID;
+import java.time.LocalDateTime;
+
 
 @Service
 @Transactional
@@ -56,6 +58,10 @@ public class BookingService {
             if (days <= 0) days = 1; // Minimum 1 day
             BigDecimal totalAmount = booking.getCar().getDailyRate().multiply(BigDecimal.valueOf(days));
             booking.setTotalAmount(totalAmount);
+        }
+
+        if (booking.getStatus() == Booking.Status.CONFIRMED && booking.getPaymentDeadline() == null) {
+            booking.setPaymentDeadline(LocalDateTime.now().plusHours(2)); // 2 godziny na płatność
         }
 
         Booking savedBooking = bookingRepository.save(booking);

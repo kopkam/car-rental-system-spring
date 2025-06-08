@@ -11,7 +11,7 @@ import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
 @EnableWebSecurity
-@EnableGlobalMethodSecurity(prePostEnabled = true)  // ✅ DODANE - potrzebne dla @PreAuthorize
+@EnableGlobalMethodSecurity(prePostEnabled = true)
 public class SecurityConfig {
 
     @Bean
@@ -27,7 +27,7 @@ public class SecurityConfig {
                         .requestMatchers("/", "/register", "/login", "/verify", "/css/**", "/js/**").permitAll()
                         .requestMatchers("/css/**", "/js/**", "/images/**").permitAll()
 
-                        // ✅ NOWE - BLOKADA CUSTOMERÓW od zarządzania użytkownikami
+                        //  BLOKADA CUSTOMERÓW od zarządzania użytkownikami
                         .requestMatchers("/users/new", "/users/*/delete", "/users/*/toggle-status").hasAnyRole("ADMIN", "MANAGER")  // Admin i Manager mogą dodawać
                         .requestMatchers("/users/assignments/**").hasRole("ADMIN")  // Tylko admin może przypisywać
                         .requestMatchers("/users/**").hasAnyRole("ADMIN", "MANAGER")  // Ogólny dostęp do users dla Admin i Manager
