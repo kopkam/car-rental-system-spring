@@ -1,4 +1,3 @@
-// CarRentalApplication.java
 package com.transport;
 
 import org.springframework.boot.SpringApplication;

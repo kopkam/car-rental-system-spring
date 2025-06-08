@@ -14,19 +14,15 @@ import java.util.List;
 public interface BookingRepository extends JpaRepository<Booking, Long> {
 
     List<Booking> findByCustomer(User customer);
-
-    // ✅ Dla managerów - używamy pole manager w Booking
     List<Booking> findByManager(User manager);
 
-    // ✅ ALTERNATYWNIE - szuka bookingów gdzie auto należy do managera
+    // Rezerwacje aut danego managera
     @Query("SELECT b FROM Booking b WHERE b.car.manager = :manager")
     List<Booking> findByCarManager(@Param("manager") User manager);
 
     List<Booking> findByStatus(Booking.Status status);
-
     List<Booking> findByStatusAndPaymentDeadlineBefore(Booking.Status status, LocalDateTime deadline);
 
-    // ✅ DODATKOWE metody które mogą się przydać
     @Query("SELECT b FROM Booking b WHERE b.car.manager = :manager AND b.status = :status")
     List<Booking> findByCarManagerAndStatus(@Param("manager") User manager, @Param("status") Booking.Status status);
 

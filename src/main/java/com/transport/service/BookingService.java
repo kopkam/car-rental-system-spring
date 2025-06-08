@@ -37,12 +37,10 @@ public class BookingService {
         return bookingRepository.findByCustomer(customer);
     }
 
-    // ✅ POPRAWIONE - używa nowej metody findByCarManager
     public List<Booking> findByManager(User manager) {
         return bookingRepository.findByCarManager(manager);
     }
 
-    // ✅ NOWA METODA - znajdź bookings managera po statusie
     public List<Booking> findByManagerAndStatus(User manager, Booking.Status status) {
         return bookingRepository.findByCarManagerAndStatus(manager, status);
     }
@@ -52,10 +50,9 @@ public class BookingService {
     }
 
     public Booking save(Booking booking) {
-        // Calculate total amount
         if (booking.getTotalAmount() == null) {
             long days = ChronoUnit.DAYS.between(booking.getStartDate(), booking.getEndDate());
-            if (days <= 0) days = 1; // Minimum 1 day
+            if (days <= 0) days = 1; // Minimum 1 dzien
             BigDecimal totalAmount = booking.getCar().getDailyRate().multiply(BigDecimal.valueOf(days));
             booking.setTotalAmount(totalAmount);
         }
@@ -66,7 +63,7 @@ public class BookingService {
 
         Booking savedBooking = bookingRepository.save(booking);
 
-        // Send confirmation email
+        // wyslanie email
         if (booking.getStatus() == Booking.Status.CONFIRMED) {
             emailService.sendBookingConfirmation(booking.getCustomer(), booking.getId());
         }

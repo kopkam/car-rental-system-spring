@@ -45,7 +45,7 @@ public class UserService {
                 .orElseThrow(() -> new RuntimeException("Customer role not found"));
         user.setRoles(Set.of(customerRole));
 
-        // ✅ NOWA LOGIKA - Automatyczne przypisanie do managera (round-robin)
+        // Automatyczne przypisanie do managera (round-robin)
         User assignedManager = findManagerWithLeastCustomers();
         if (assignedManager != null) {
             user.setManager(assignedManager);
@@ -54,18 +54,18 @@ public class UserService {
 
         User savedUser = userRepository.save(user);
 
-        // Create verification token
+        // token
         String token = UUID.randomUUID().toString();
         VerificationToken verificationToken = new VerificationToken(token, savedUser);
         tokenRepository.save(verificationToken);
 
-        // Send confirmation email
+        // wyslanie emaila
         emailService.sendVerificationEmail(savedUser, token);
 
         return savedUser;
     }
 
-    // ✅ NOWA METODA - znajdź managera z najmniejszą liczbą customerów
+    // znajdź managera z najmniejszą liczbą customerów
     public User findManagerWithLeastCustomers() {
         List<User> managers = findByRole("ROLE_MANAGER");
         if (managers.isEmpty()) {
@@ -88,7 +88,7 @@ public class UserService {
         return managerWithLeastCustomers;
     }
 
-    // ✅ NOWA METODA - policz customerów dla managera
+    // olicz customerów dla managera
     public int countCustomersForManager(Long managerId) {
         return userRepository.countCustomersByManagerId(managerId);
     }
@@ -100,9 +100,9 @@ public class UserService {
             user.setEnabled(true);
             userRepository.save(user);
             tokenRepository.delete(verificationToken);
-            return true;  // ✅ Zwróć true jeśli weryfikacja się powiodła
+            return true;
         }
-        return false;  // ✅ Zwróć false jeśli token nieprawidłowy lub wygasł
+        return false;
     }
 
     public User findByUsername(String username) {
@@ -123,7 +123,7 @@ public class UserService {
         return userRepository.findAll();
     }
 
-    // ✅ ZAKTUALIZOWANA METODA - znajdź użytkowników widocznych dla danego użytkownika
+    // znajdź użytkowników widocznych dla danego użytkownika
     public List<User> findUsersForCurrentUser(String currentUsername) {
         User currentUser = findByUsername(currentUsername);
         if (currentUser == null) {
@@ -142,12 +142,12 @@ public class UserService {
         }
     }
 
-    // ✅ NOWA METODA - znajdź customerów przypisanych do managera
+    // znajdź customerów przypisanych do managera
     public List<User> findCustomersByManager(Long managerId) {
         return userRepository.findCustomersByManagerId(managerId);
     }
 
-    // ✅ NOWA METODA - sprawdź czy manager może edytować użytkownika
+    // sprawdź czy manager może edytować użytkownika
     public boolean canManagerEditUser(String managerUsername, Long userId) {
         User manager = findByUsername(managerUsername);
         if (manager == null || !manager.isManager()) {
@@ -165,7 +165,7 @@ public class UserService {
                 userToEdit.getManager().getId().equals(manager.getId());
     }
 
-    // ✅ ZAKTUALIZOWANA METODA - znajdź użytkowników po roli
+    // znajdź użytkowników po roli
     public List<User> findByRole(String roleName) {
         try {
             Role.RoleName roleNameEnum = Role.RoleName.valueOf(roleName);
@@ -177,10 +177,10 @@ public class UserService {
     }
 
     public User createUser(User user, Set<String> roleNames) {
-        return createUser(user, roleNames, null);  // Dla kompatybilności wstecznej
+        return createUser(user, roleNames, null);
     }
 
-    // ✅ NOWA PRZECIĄŻONA METODA z logiką przypisywania managera
+    // logika przypisywania managera
     public User createUser(User user, Set<String> roleNames, User createdBy) {
         // Check if username or email already exists
         if (userRepository.existsByUsername(user.getUsername())) {
@@ -190,10 +190,8 @@ public class UserService {
             throw new RuntimeException("Email already exists");
         }
 
-        // Encode password
         user.setPassword(passwordEncoder.encode(user.getPassword()));
 
-        // Set roles
         Set<Role> roles = new HashSet<>();
         if (roleNames != null && !roleNames.isEmpty()) {
             for (String roleName : roleNames) {
@@ -203,14 +201,12 @@ public class UserService {
                 roles.add(role);
             }
         } else {
-            // Default to CUSTOMER role
             Role customerRole = roleRepository.findByName(Role.RoleName.ROLE_CUSTOMER)
                     .orElseThrow(() -> new RuntimeException("Customer role not found"));
             roles.add(customerRole);
         }
         user.setRoles(roles);
 
-        // ✅ NOWA LOGIKA PRZYPISYWANIA MANAGERA
         boolean isCustomer = roleNames != null && roleNames.contains("ROLE_CUSTOMER");
         if (isCustomer) {
             if (createdBy != null && createdBy.isManager()) {
@@ -227,7 +223,6 @@ public class UserService {
             }
         }
 
-        // Enable user by default for admin-created users
         user.setEnabled(true);
 
         return userRepository.save(user);
@@ -239,18 +234,15 @@ public class UserService {
             throw new RuntimeException("User not found");
         }
 
-        // Update basic fields
         existingUser.setUsername(user.getUsername());
         existingUser.setEmail(user.getEmail());
         existingUser.setFirstName(user.getFirstName());
         existingUser.setLastName(user.getLastName());
 
-        // Update password only if provided
         if (user.getPassword() != null && !user.getPassword().trim().isEmpty()) {
             existingUser.setPassword(passwordEncoder.encode(user.getPassword()));
         }
 
-        // Update roles
         if (roleNames != null) {
             Set<Role> roles = roleNames.stream()
                     .map(roleName -> {
@@ -261,7 +253,7 @@ public class UserService {
                     .collect(Collectors.toSet());
             existingUser.setRoles(roles);
 
-            // ✅ NOWA LOGIKA - Jeśli zmieniamy rolę na customer, przypisz managera
+            // zmieniamy rolę na customer, przypisz managera
             boolean isCustomer = roleNames.contains("ROLE_CUSTOMER");
             if (isCustomer && existingUser.getManager() == null) {
                 User assignedManager = findManagerWithLeastCustomers();
@@ -286,17 +278,14 @@ public class UserService {
         userRepository.deleteById(id);
     }
 
-    // ✅ POMOCNICZA METODA - sprawdza czy user istnieje po username
     public boolean existsByUsername(String username) {
         return userRepository.existsByUsername(username);
     }
 
-    // ✅ POMOCNICZA METODA - sprawdza czy user istnieje po email
     public boolean existsByEmail(String email) {
         return userRepository.existsByEmail(email);
     }
 
-    // ✅ NOWA METODA - przypisz customera do managera ręcznie (dla admina)
     public void assignCustomerToManager(Long customerId, Long managerId) {
         User customer = findById(customerId);
         User manager = findById(managerId);
@@ -308,7 +297,6 @@ public class UserService {
         }
     }
 
-    // ✅ NOWA METODA - usuń przypisanie customera od managera
     public void removeCustomerFromManager(Long customerId) {
         User customer = findById(customerId);
         if (customer != null && customer.isCustomer()) {
@@ -317,7 +305,6 @@ public class UserService {
         }
     }
 
-    // ✅ NOWA METODA - znajdź customerów bez managera
     public List<User> findCustomersWithoutManager() {
         return userRepository.findCustomersWithoutManager();
     }

@@ -22,7 +22,7 @@ import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping("/users")
-@PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")  // Customer nie ma dostępu wcale
+@PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
 public class UserController {
 
     @Autowired
@@ -33,7 +33,6 @@ public class UserController {
         String currentUsername = authentication.getName();
         Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
 
-        // ✅ NOWA LOGIKA - różne listy dla różnych ról
         List<User> users = userService.findUsersForCurrentUser(currentUsername);
         String currentUserRole = getCurrentUserRole(authorities);
 
@@ -41,31 +40,24 @@ public class UserController {
         model.addAttribute("currentUserRole", currentUserRole);
         model.addAttribute("currentUsername", currentUsername);
 
-        return "users"; // Zmienione z "users/list" na "users"
+        return "users";
     }
 
     @GetMapping("/new")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")  // ✅ ADMIN i MANAGER mogą dodawać użytkowników
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")  // ADMIN i MANAGER mogą dodawać użytkowników
     public String showCreateForm(Model model) {
         model.addAttribute("user", new User());
         model.addAttribute("roles", Role.RoleName.values());
-        return "users/form"; // lub "user-form" jeśli masz taki plik
+        return "users/form";
     }
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")  // ✅ ADMIN i MANAGER mogą tworzyć użytkowników
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")  // ADMIN i MANAGER mogą tworzyć użytkowników
     public String createUser(@Valid @ModelAttribute User user,
                              BindingResult result,
                              @RequestParam(value = "roleNames", required = false) Set<String> roleNames,
                              Model model,
-                             Authentication authentication) {  // ✅ DODANE - potrzebne do identyfikacji aktualnego użytkownika
-
-        // ✅ DEBUG LOGGING
-        System.out.println("=== CONTROLLER CREATE USER DEBUG ===");
-        System.out.println("User: " + user.getUsername());
-        System.out.println("RoleNames from form: " + roleNames);
-        System.out.println("Current user: " + authentication.getName());
-        System.out.println("User authorities: " + authentication.getAuthorities());
+                             Authentication authentication) {
 
         if (result.hasErrors()) {
             System.out.println("Form validation errors: " + result.getAllErrors());
@@ -74,7 +66,7 @@ public class UserController {
         }
 
         try {
-            // ✅ NOWA LOGIKA - Manager przypisuje customera do siebie
+            // Manager przypisuje customera do siebie
             String currentUsername = authentication.getName();
             User currentUser = userService.findByUsername(currentUsername);
 
@@ -85,7 +77,7 @@ public class UserController {
                         .collect(Collectors.toList()));
             }
 
-            // ✅ POPRAWKA - Jeśli manager tworzy użytkownika, automatycznie przypisz rolę CUSTOMER
+            // Jeśli manager tworzy użytkownika, automatycznie przypisz rolę CUSTOMER
             if (currentUser != null && currentUser.isManager() && (roleNames == null || roleNames.isEmpty())) {
                 roleNames = Set.of("ROLE_CUSTOMER");
                 System.out.println("Manager creating user - automatically assigned ROLE_CUSTOMER");
@@ -112,7 +104,6 @@ public class UserController {
             return "redirect:/users?error=notfound";
         }
 
-        // ✅ DODATKOWA KONTROLA - sprawdź uprawnienia
         String currentUsername = authentication.getName();
         User currentUser = userService.findByUsername(currentUsername);
 
@@ -126,7 +117,6 @@ public class UserController {
         model.addAttribute("roles", Role.RoleName.values());
         model.addAttribute("currentUserRole", currentUserRole);
 
-        // ✅ NOWA FUNKCJONALNOŚĆ - lista managerów do wyboru (dla admina i managera)
         if (user.isCustomer()) {
             List<User> availableManagers = userService.findByRole("ROLE_MANAGER");
             model.addAttribute("availableManagers", availableManagers);
@@ -141,17 +131,15 @@ public class UserController {
                              @ModelAttribute User user,
                              BindingResult result,
                              @RequestParam(value = "roleNames", required = false) Set<String> roleNames,
-                             @RequestParam(value = "managerId", required = false) Long managerId, // ✅ NOWY PARAMETR
+                             @RequestParam(value = "managerId", required = false) Long managerId,
                              Model model,
                              Authentication authentication) {
 
-        // Pobierz istniejącego użytkownika z bazy danych
         User existingUser = userService.findById(id);
         if (existingUser == null) {
             return "redirect:/users?error=notfound";
         }
 
-        // ✅ DODATKOWA KONTROLA dla managerów
         String currentUsername = authentication.getName();
         User currentUser = userService.findByUsername(currentUsername);
         String currentUserRole = getCurrentUserRole(authentication.getAuthorities());
@@ -160,11 +148,9 @@ public class UserController {
             if (!userService.canManagerEditUser(currentUsername, id)) {
                 return "redirect:/users?error=forbidden";
             }
-            // Manager może zmieniać tylko podstawowe dane i przypisanie managera, nie role
             roleNames = null;
         }
 
-        // Jeśli password jest puste, zachowaj stare hasło
         if (user.getPassword() == null || user.getPassword().trim().isEmpty()) {
             user.setPassword(existingUser.getPassword());
         }
@@ -173,7 +159,6 @@ public class UserController {
             user.setId(id);
             userService.updateUser(user, roleNames);
 
-            // ✅ NOWA LOGIKA - zmiana managera dla customera
             if (existingUser.isCustomer() && managerId != null && managerId > 0) {
                 // Admin może zmieniać managera dla każdego customera
                 // Manager może zmieniać managera tylko dla swoich customerów
@@ -190,7 +175,6 @@ public class UserController {
             model.addAttribute("roles", Role.RoleName.values());
             model.addAttribute("currentUserRole", currentUserRole);
 
-            // Ponownie dodaj listę managerów w przypadku błędu
             if (existingUser.isCustomer()) {
                 List<User> availableManagers = userService.findByRole("ROLE_MANAGER");
                 model.addAttribute("availableManagers", availableManagers);
@@ -201,20 +185,19 @@ public class UserController {
     }
 
     @PostMapping("/{id}/toggle-status")
-    @PreAuthorize("hasRole('ADMIN')")  // Tylko admin może zmieniać status
+    @PreAuthorize("hasRole('ADMIN')")
     public String toggleUserStatus(@PathVariable Long id) {
         userService.toggleUserStatus(id);
         return "redirect:/users";
     }
 
     @PostMapping("/{id}/delete")
-    @PreAuthorize("hasRole('ADMIN')")  // Tylko admin może usuwać użytkowników
+    @PreAuthorize("hasRole('ADMIN')")
     public String deleteUser(@PathVariable Long id) {
         userService.deleteById(id);
         return "redirect:/users?deleted";
     }
 
-    // ✅ NOWA METODA - panel przypisywania customerów do managerów (tylko dla admina)
     @GetMapping("/assignments")
     @PreAuthorize("hasRole('ADMIN')")
     public String showAssignments(Model model) {
@@ -244,7 +227,6 @@ public class UserController {
         return "redirect:/users/assignments?removed";
     }
 
-    // ✅ NOWA METODA - szybka zmiana managera dla customera (AJAX endpoint)
     @PostMapping("/{customerId}/change-manager")
     @PreAuthorize("hasRole('ADMIN') or (hasRole('MANAGER') and @userService.canManagerEditUser(authentication.name, #customerId))")
     @ResponseBody
@@ -260,7 +242,6 @@ public class UserController {
                 return "error:Customer not found";
             }
 
-            // Sprawdź uprawnienia
             if (currentUser.isManager() && !userService.canManagerEditUser(currentUsername, customerId)) {
                 return "error:Access denied";
             }
@@ -273,7 +254,6 @@ public class UserController {
         }
     }
 
-    // ✅ POMOCNICZA METODA - określ rolę użytkownika
     private String getCurrentUserRole(Collection<? extends GrantedAuthority> authorities) {
         if (authorities.stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"))) {
             return "ADMIN";
@@ -283,7 +263,6 @@ public class UserController {
         return "CUSTOMER";
     }
 
-    // ✅ NOWA METODA - statystyki dla managera
     @GetMapping("/my-customers")
     @PreAuthorize("hasRole('MANAGER')")
     public String myCustomers(Model model, Authentication authentication) {

@@ -19,7 +19,6 @@ public interface CarRepository extends JpaRepository<Car, Long> {
     Car findByLicensePlate(String licensePlate);
     List<Car> findByYearBetween(Integer startYear, Integer endYear);
 
-    // ✅ METODY dla managera
     List<Car> findByManager(User manager);
     List<Car> findByManagerAndStatus(User manager, Car.Status status);
 }

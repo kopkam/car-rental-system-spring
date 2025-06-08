@@ -490,7 +490,6 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Animate table rows on load
         const rows = document.querySelectorAll('tbody tr');
         rows.forEach((row, index) => {
             row.style.opacity = '0';
@@ -503,7 +502,6 @@
             }, index * 100);
         });
 
-        // Add ripple effect to buttons
         document.querySelectorAll('.btn').forEach(button => {
             button.addEventListener('click', function(e) {
                 const ripple = document.createElement('span');
@@ -527,7 +525,6 @@
             });
         });
 
-        // Animate stat cards
         const statCards = document.querySelectorAll('.stat-card');
         statCards.forEach((card, index) => {
             card.style.opacity = '0';

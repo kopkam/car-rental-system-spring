@@ -257,7 +257,7 @@
             <div class="card-body p-4">
                 <form th:object="${car}" th:action="@{/cars/add}" method="post" enctype="multipart/form-data">
 
-                    <!-- ✅ NOWA SEKCJA - Upload zdjęcia -->
+                    <!--Upload zdjęcia -->
                     <div class="mb-4">
                         <label for="imageFile" class="form-label">
                             <i class="bi bi-camera me-2"></i><span th:text="#{cars.image}">Car Image</span>
@@ -374,7 +374,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    // ✅ FUNKCJE DO PREVIEW ZDJĘĆ
+    // PREVIEW ZDJĘĆ
     function previewImage(input) {
         const file = input.files[0];
         const preview = document.getElementById('imagePreview');
@@ -414,7 +414,7 @@
         }
     }
 
-    // Drag & Drop functionality
+    // Drag & Drop
     document.addEventListener('DOMContentLoaded', function() {
         const container = document.getElementById('imagePreviewContainer');
         const fileInput = document.getElementById('imageFile');
@@ -446,7 +446,7 @@
             }
         });
 
-        // Form animation
+        // Form
         const formCard = document.querySelector('.form-card');
         formCard.style.opacity = '0';
         formCard.style.transform = 'translateY(30px)';

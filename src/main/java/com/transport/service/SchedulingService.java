@@ -21,7 +21,7 @@ public class SchedulingService {
     @Autowired
     private BookingRepository bookingRepository;
 
-    @Scheduled(fixedRate = 60000)
+    @Scheduled(fixedRate = 60000) //seconds
     public void cancelUnpaidBookings() {
         logger.info("=== SCHEDULER STARTED ===");
         logger.info("Current time: {}", LocalDateTime.now());

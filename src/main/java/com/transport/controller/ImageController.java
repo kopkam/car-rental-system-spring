@@ -20,47 +20,41 @@ import java.nio.file.Paths;
 @RequestMapping("/images")
 public class ImageController {
 
-    // Ścieżka do katalogu z obrazami - powinna być taka sama jak w CarService
     private static final String UPLOAD_DIR = "C:/WPFAT_project/Projekt/uploads/cars/";
 
     @GetMapping("/cars/{filename:.+}")
     public ResponseEntity<Resource> getCarImage(@PathVariable String filename) {
         try {
-            System.out.println("🖼️ Image request: /images/cars/" + filename);
+            System.out.println("Image request: /images/cars/" + filename);
 
-            // Buduj pełną ścieżkę do pliku
             Path filePath = Paths.get(UPLOAD_DIR).resolve(filename);
-            System.out.println("📁 Looking for file at: " + filePath.toAbsolutePath());
+            System.out.println("Looking for file at: " + filePath.toAbsolutePath());
 
-            // Sprawdź czy plik istnieje
             if (!Files.exists(filePath)) {
-                System.out.println("❌ Image not found: " + filePath.toAbsolutePath());
+                System.out.println("Image not found: " + filePath.toAbsolutePath());
 
                 // Debug - pokaż zawartość katalogu
                 Path parentDir = filePath.getParent();
                 if (Files.exists(parentDir)) {
-                    System.out.println("📂 Directory contents:");
+                    System.out.println("Directory contents:");
                     Files.list(parentDir).forEach(path ->
                             System.out.println("  - " + path.getFileName()));
                 } else {
-                    System.out.println("❌ Upload directory doesn't exist: " + parentDir);
+                    System.out.println("Upload directory doesn't exist: " + parentDir);
                 }
 
                 return ResponseEntity.notFound().build();
             }
 
-            // Utwórz Resource
             Resource resource = new UrlResource(filePath.toUri());
 
             if (!resource.exists() || !resource.isReadable()) {
-                System.out.println("❌ Resource not readable: " + filePath.toAbsolutePath());
+                System.out.println("Resource not readable: " + filePath.toAbsolutePath());
                 return ResponseEntity.notFound().build();
             }
 
-            // Określ typ MIME
             String contentType = Files.probeContentType(filePath);
             if (contentType == null) {
-                // Fallback na podstawie rozszerzenia
                 String fileName = filename.toLowerCase();
                 if (fileName.endsWith(".jpg") || fileName.endsWith(".jpeg")) {
                     contentType = "image/jpeg";
@@ -73,7 +67,7 @@ public class ImageController {
                 }
             }
 
-            System.out.println("✅ Serving image: " + filename + " (" + contentType + ")");
+            System.out.println("Serving image: " + filename + " (" + contentType + ")");
 
             return ResponseEntity.ok()
                     .contentType(MediaType.parseMediaType(contentType))
@@ -82,7 +76,7 @@ public class ImageController {
                     .body(resource);
 
         } catch (Exception e) {
-            System.err.println("❌ Error serving image: " + e.getMessage());
+            System.err.println("Error serving image: " + e.getMessage());
             e.printStackTrace();
             return ResponseEntity.notFound().build();
         }

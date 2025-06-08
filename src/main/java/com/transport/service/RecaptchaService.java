@@ -31,21 +31,17 @@ public class RecaptchaService {
             System.out.println("Response: " + recaptchaResponse);
             System.out.println("Secret Key: " + (recaptchaSecretKey != null ? "Present" : "Missing"));
 
-            // Prepare form data
             MultiValueMap<String, String> formData = new LinkedMultiValueMap<>();
             formData.add("secret", recaptchaSecretKey);
             formData.add("response", recaptchaResponse);
             formData.add("remoteip", clientIp);
 
-            // Set headers
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
 
-            // Create request entity
             HttpEntity<MultiValueMap<String, String>> requestEntity =
                     new HttpEntity<>(formData, headers);
 
-            // Make the request
             ResponseEntity<Map> responseEntity = restTemplate.postForEntity(
                     recaptchaVerifyUrl,
                     requestEntity,
@@ -59,7 +55,6 @@ public class RecaptchaService {
                 Boolean success = (Boolean) response.get("success");
                 System.out.println("reCAPTCHA verification result: " + success);
 
-                // Log error codes if verification failed
                 if (!success && response.containsKey("error-codes")) {
                     System.err.println("reCAPTCHA error codes: " + response.get("error-codes"));
                 }

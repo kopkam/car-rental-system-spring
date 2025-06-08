@@ -339,7 +339,6 @@
             }
         }
 
-        /* Form row for side-by-side inputs */
         .form-row {
             display: flex;
             gap: 1rem;
@@ -350,7 +349,6 @@
             flex: 1;
         }
 
-        /* Ripple effect */
         .ripple {
             position: absolute;
             border-radius: 50%;
@@ -402,7 +400,6 @@
     <!-- Registration Form -->
     <form th:object="${user}" th:action="@{/register}" method="post" id="registerForm">
 
-        <!-- Username & Email Row -->
         <div class="form-row">
             <div class="form-group">
                 <i class="bi bi-person input-icon"></i>
@@ -487,7 +484,6 @@
         </button>
     </form>
 
-    <!-- Login Link -->
     <div class="login-link">
         <a th:href="@{/login}">
             <i class="bi bi-box-arrow-in-right me-1"></i>
@@ -537,7 +533,6 @@
                 if (/[0-9]/.test(password)) strength++;
                 if (/[^A-Za-z0-9]/.test(password)) strength++;
 
-                // Update strength bar
                 strengthBar.className = 'password-strength-bar';
                 if (strength >= 1) strengthBar.classList.add('strength-weak');
                 if (strength >= 2) strengthBar.classList.add('strength-fair');
@@ -546,7 +541,6 @@
             });
         }
 
-        // Password confirmation validation
         const confirmPasswordInput = document.getElementById('confirmPassword');
         if (confirmPasswordInput) {
             confirmPasswordInput.addEventListener('input', function() {
@@ -558,7 +552,6 @@
             });
         }
 
-        // Add ripple effect to register button
         const registerButton = document.getElementById('registerButton');
         registerButton.addEventListener('click', function(e) {
             const ripple = document.createElement('span');
@@ -581,14 +574,12 @@
             }, 600);
         });
 
-        // Form submission loading state
         const registerForm = document.getElementById('registerForm');
         registerForm.addEventListener('submit', function() {
             registerButton.classList.add('btn-loading');
             registerButton.querySelector('span').style.opacity = '0';
         });
 
-        // Focus enhancement
         const inputs = document.querySelectorAll('.input-wrapper input');
         inputs.forEach(input => {
             input.addEventListener('focus', function() {

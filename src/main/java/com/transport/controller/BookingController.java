@@ -20,7 +20,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.util.List;
 
 @Controller
-@RequestMapping({"/bookings", "/reservations"}) // obsługuje oba URL-e
+@RequestMapping({"/bookings", "/reservations"}) // obsługa URLow
 public class BookingController {
 
     @Autowired

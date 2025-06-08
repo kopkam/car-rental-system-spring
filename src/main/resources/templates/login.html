@@ -414,7 +414,6 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Animate login container on load
         const container = document.querySelector('.login-container');
         container.style.opacity = '0';
         container.style.transform = 'translateY(30px)';
@@ -448,14 +447,12 @@
             }, 600);
         });
 
-        // Form submission loading state
         const loginForm = document.getElementById('loginForm');
         loginForm.addEventListener('submit', function() {
             loginButton.classList.add('btn-loading');
             loginButton.querySelector('span').style.opacity = '0';
         });
 
-        // Focus enhancement
         const inputs = document.querySelectorAll('.input-wrapper input');
         inputs.forEach(input => {
             input.addEventListener('focus', function() {

@@ -75,7 +75,6 @@ public class Booking {
         this.paymentDeadline = LocalDateTime.now().plusHours(24); // 24h to pay
     }
 
-    // Getters and setters...
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 

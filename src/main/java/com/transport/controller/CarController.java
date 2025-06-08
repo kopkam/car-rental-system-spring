@@ -86,7 +86,6 @@ public class CarController {
             User currentUser = userService.findByUsername(username);
             model.addAttribute("currentUser", currentUser);
 
-            // Ponownie dodaj listę managerów dla admina jeśli były błędy
             if (currentUser.hasRole("ROLE_ADMIN")) {
                 List<User> managers = userService.findByRole("ROLE_MANAGER");
                 model.addAttribute("managers", managers);
@@ -98,7 +97,6 @@ public class CarController {
             String username = auth.getName();
             User currentUser = userService.findByUsername(username);
 
-            // Użyj nowej metody z userem i plikiem obrazu
             carService.saveCar(car, currentUser, imageFile);
 
             redirectAttributes.addFlashAttribute("success", "Car added successfully!");
@@ -153,7 +151,6 @@ public class CarController {
             User currentUser = userService.findByUsername(username);
             model.addAttribute("currentUser", currentUser);
 
-            // Ponownie dodaj listę managerów dla admina jeśli były błędy
             if (currentUser.hasRole("ROLE_ADMIN")) {
                 List<User> managers = userService.findByRole("ROLE_MANAGER");
                 model.addAttribute("managers", managers);
@@ -176,38 +173,24 @@ public class CarController {
 
             car.setId(id);
 
-            // ✅ POPRAWKA - Logika zarządzania managerem
+            // Logika zarządzania managerem
             if (currentUser.hasRole("ROLE_MANAGER")) {
                 // Manager może edytować tylko swoje auta - przypisz siebie
                 car.setManager(currentUser);
             } else if (currentUser.hasRole("ROLE_ADMIN")) {
-                // Admin może:
-                // 1. Przypisać managera (jeśli wybrano z selecta)
-                // 2. Pozostawić bez managera (jeśli nie wybrano)
-                // 3. Zachować istniejącego managera (jeśli nie zmieniono)
 
-                // Jeśli manager.id jest null lub pusty w formularzu, znaczy że admin wybrał "No Manager"
                 if (car.getManager() == null || car.getManager().getId() == null) {
                     car.setManager(null); // Usuń managera - auto będzie zarządzane przez admina
                 } else {
-                    // Admin wybrał konkretnego managera z listy
+
                     User selectedManager = userService.findById(car.getManager().getId());
                     car.setManager(selectedManager);
                 }
             }
 
-            // Jeśli nie ma nowego obrazu, zachowaj stary
             if (imageFile == null || imageFile.isEmpty()) {
                 car.setImageUrl(existingCar.getImageUrl());
             }
-
-            // ✅ DEBUG - dodaj tymczasowo
-            System.out.println("=== UPDATE CAR DEBUG ===");
-            System.out.println("Car ID: " + car.getId());
-            System.out.println("Car Brand: " + car.getBrand());
-            System.out.println("Car Manager: " + (car.getManager() != null ? car.getManager().getUsername() : "NULL"));
-            System.out.println("Current User: " + currentUser.getUsername());
-            System.out.println("Current User Role: " + (currentUser.hasRole("ROLE_ADMIN") ? "ADMIN" : "MANAGER"));
 
             carService.saveCar(car, currentUser, imageFile);
             redirectAttributes.addFlashAttribute("success", "Car updated successfully!");

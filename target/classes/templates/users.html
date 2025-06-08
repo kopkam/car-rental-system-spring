@@ -438,7 +438,6 @@
             }
         }
 
-        /* Ripple effect */
         .ripple {
             position: absolute;
             border-radius: 50%;
@@ -455,7 +454,6 @@
             }
         }
 
-        /* Empty state */
         .empty-state {
             text-align: center;
             padding: 4rem 2rem;
@@ -562,7 +560,6 @@
             </div>
         </div>
 
-        <!-- Users Table -->
         <div class="users-table-container" th:unless="${users.empty}">
             <div class="table-header">
                 <h5><i class="bi bi-people me-2"></i><span th:text="#{users.table.title}">All Users</span></h5>
@@ -632,7 +629,6 @@
             </div>
         </div>
 
-        <!-- Empty State -->
         <div th:if="${users.empty}" class="empty-state">
             <i class="bi bi-people"></i>
             <h3 th:text="#{users.empty.title}">No users found</h3>
@@ -642,7 +638,6 @@
             </a>
         </div>
 
-        <!-- Back Button -->
         <div class="mt-4">
             <a href="/dashboard" class="btn back-btn">
                 <i class="bi bi-arrow-left me-2"></i><span th:text="#{users.back}">Back to Dashboard</span>
@@ -656,7 +651,6 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Animate table rows on load
         const rows = document.querySelectorAll('tbody tr');
         rows.forEach((row, index) => {
             row.style.opacity = '0';
@@ -669,7 +663,6 @@
             }, index * 100);
         });
 
-        // Add ripple effect to buttons
         document.querySelectorAll('.btn-action, .add-user-btn, .back-btn').forEach(button => {
             button.addEventListener('click', function(e) {
                 const ripple = document.createElement('span');
@@ -693,7 +686,6 @@
             });
         });
 
-        // Animate stat cards on scroll
         const observerOptions = {
             threshold: 0.1,
             rootMargin: '0px 0px -50px 0px'
@@ -708,7 +700,6 @@
             });
         }, observerOptions);
 
-        // Observe stat cards
         document.querySelectorAll('.stat-card').forEach(card => {
             card.style.opacity = '0';
             card.style.transform = 'translateY(20px)';
@@ -716,7 +707,6 @@
             observer.observe(card);
         });
 
-        // Animate table container
         const tableContainer = document.querySelector('.users-table-container');
         if (tableContainer) {
             tableContainer.style.opacity = '0';
@@ -729,7 +719,6 @@
             }, 300);
         }
 
-        // Enhanced hover effects for user avatars
         document.querySelectorAll('.user-avatar').forEach(avatar => {
             avatar.addEventListener('mouseenter', function() {
                 this.style.transform = 'scale(1.1) rotate(5deg)';

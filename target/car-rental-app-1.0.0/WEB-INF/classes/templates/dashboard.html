@@ -409,7 +409,7 @@
 </head>
 <body>
 
-<!-- Bootstrap Navbar - taki sam jak w cars/list.html -->
+<!-- Bootstrap Navbar -->
 <nav class="navbar navbar-expand-lg navbar-dark">
     <div class="container">
         <a class="navbar-brand" href="/dashboard">
@@ -541,7 +541,6 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Animate cards on load
         const cards = document.querySelectorAll('.action-card, .user-info-card');
         cards.forEach((card, index) => {
             card.style.opacity = '0';
@@ -554,7 +553,6 @@
             }, index * 200);
         });
 
-        // Add ripple effect to buttons
         document.querySelectorAll('.action-btn').forEach(button => {
             button.addEventListener('click', function(e) {
                 const ripple = document.createElement('span');

@@ -36,12 +36,12 @@ public class CarService {
             Path uploadPath = Paths.get(uploadDir);
             if (!Files.exists(uploadPath)) {
                 Files.createDirectories(uploadPath);
-                System.out.println("✅ Created upload directory: " + uploadPath.toAbsolutePath());
+                System.out.println("Created upload directory: " + uploadPath.toAbsolutePath());
             } else {
-                System.out.println("📁 Upload directory exists: " + uploadPath.toAbsolutePath());
+                System.out.println("Upload directory exists: " + uploadPath.toAbsolutePath());
             }
         } catch (Exception e) {
-            System.err.println("❌ Failed to create upload directory: " + e.getMessage());
+            System.err.println("Failed to create upload directory: " + e.getMessage());
         }
     }
 
@@ -57,12 +57,10 @@ public class CarService {
         }
     }
 
-    // ✅ PROSTA METODA SAVE - używana przez BookingController
     public Car save(Car car) {
         return carRepository.save(car);
     }
 
-    // ✅ NOWA METODA SAVE Z PLIKIEM OBRAZU - główna metoda używana przez kontroler
     @Transactional
     public Car saveCar(Car car, User currentUser, MultipartFile imageFile) {
         System.out.println("=== SAVING CAR ===");
@@ -70,7 +68,6 @@ public class CarService {
         System.out.println("Current user: " + currentUser.getUsername());
 
         try {
-            // Walidacja czy już istnieje samochód z taką tablicą rejestracyjną
             if (car.getId() == null) { // tylko dla nowych aut
                 Car existingCar = carRepository.findByLicensePlate(car.getLicensePlate());
                 if (existingCar != null) {
@@ -78,50 +75,40 @@ public class CarService {
                 }
             }
 
-            // Ustaw managera
             if (currentUser.hasRole("ROLE_ADMIN") && car.getManager() == null) {
-                // Admin może nie ustawiać managera - wtedy zostanie null
             } else if (currentUser.hasRole("ROLE_MANAGER")) {
                 car.setManager(currentUser);
             }
 
-            // Obsługa obrazu
             if (imageFile != null && !imageFile.isEmpty()) {
                 System.out.println("Image file: " + imageFile.getOriginalFilename());
 
-                // Sprawdź typ pliku
                 String contentType = imageFile.getContentType();
                 if (contentType == null || !contentType.startsWith("image/")) {
                     throw new RuntimeException("Please upload a valid image file!");
                 }
 
-                // Generuj unikalną nazwę pliku
                 String fileExtension = getFileExtension(imageFile.getOriginalFilename());
                 String uniqueFilename = UUID.randomUUID().toString() + fileExtension;
 
-                // Przygotuj katalog - POPRAWKA: używaj uploadDir zamiast UPLOAD_DIR
                 Path uploadPath = Paths.get(uploadDir);
                 if (!Files.exists(uploadPath)) {
                     Files.createDirectories(uploadPath);
                 }
 
-                // Zapisz plik
                 Path filePath = uploadPath.resolve(uniqueFilename);
                 Files.copy(imageFile.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
 
-                System.out.printf("📁 Image saved to: %s%n", filePath.toAbsolutePath());
-                System.out.printf("🖼️ Saved image: %s%n", uniqueFilename);
+                System.out.printf("Image saved to: %s%n", filePath.toAbsolutePath());
+                System.out.printf("🖼Saved image: %s%n", uniqueFilename);
 
-                // ⚠️ WAŻNE: Zapisz tylko URL względny, nie pełną ścieżkę!
                 car.setImageUrl("/images/cars/" + uniqueFilename);
             }
 
-            // Ustaw datę utworzenia dla nowych aut
             if (car.getCreatedAt() == null) {
                 car.setCreatedAt(LocalDateTime.now());
             }
 
-            // Zapisz do bazy
             Car savedCar = carRepository.save(car);
             System.out.println("Car saved with ID: " + savedCar.getId() +
                     (savedCar.getImageUrl() != null ? " (Image: " +
@@ -129,38 +116,34 @@ public class CarService {
 
             return savedCar;
         } catch (IOException e) {
-            System.err.println("❌ Error saving image: " + e.getMessage());
+            System.err.println("Error saving image: " + e.getMessage());
             throw new RuntimeException("Failed to save image: " + e.getMessage(), e);
         }
     }
 
     private String getFileExtension(String filename) {
         if (filename == null || filename.lastIndexOf('.') == -1) {
-            return ".jpg"; // domyślne rozszerzenie
+            return ".jpg";
         }
         return filename.substring(filename.lastIndexOf('.'));
     }
 
-    // ✅ METODA SAVE Z WALIDACJĄ - dla kompatybilności wstecznej (bez pliku)
     @Transactional
     public Car saveCar(Car car, User currentUser) {
         return saveCar(car, currentUser, null);
     }
 
-    // ✅ PRZECIĄŻONA METODA - dla przypadków gdy nie mamy usera
     @Transactional
     public Car saveCar(Car car) {
         return carRepository.save(car);
     }
 
     private String saveImage(MultipartFile file) throws IOException {
-        // Sprawdź typ pliku
         String contentType = file.getContentType();
         if (contentType == null || !contentType.startsWith("image/")) {
             throw new IOException("File is not an image");
         }
 
-        // Generuj unikalną nazwę pliku
         String originalFilename = file.getOriginalFilename();
         String extension = "";
         if (originalFilename != null && originalFilename.contains(".")) {
@@ -169,7 +152,6 @@ public class CarService {
 
         String filename = UUID.randomUUID().toString() + extension;
 
-        // Zapisz plik
         Path uploadPath = Paths.get(uploadDir);
         Path filePath = uploadPath.resolve(filename);
 
@@ -177,7 +159,6 @@ public class CarService {
 
         System.out.println("📸 Image saved to: " + filePath.toAbsolutePath());
 
-        // Zwróć tylko nazwę pliku (bez ścieżki)
         return filename;
     }
 
@@ -213,7 +194,6 @@ public class CarService {
                 throw new RuntimeException("Car not found with ID: " + id);
             }
 
-            // Check if car has active bookings
             if (car.getBookings() != null && !car.getBookings().isEmpty()) {
                 long activeBookings = car.getBookings().stream()
                         .filter(booking -> booking.getStatus() != null &&
@@ -225,10 +205,8 @@ public class CarService {
                 }
             }
 
-            // Usuń plik obrazu jeśli istnieje - POPRAWIONE: usunięcie niepotrzebnej logiki
             if (car.getImageUrl() != null && !car.getImageUrl().isEmpty()) {
                 try {
-                    // Wyciągnij nazwę pliku z URL
                     String filename = car.getImageUrl().substring(car.getImageUrl().lastIndexOf("/") + 1);
                     Path imagePath = Paths.get(uploadDir).resolve(filename);
                     Files.deleteIfExists(imagePath);
@@ -272,17 +250,14 @@ public class CarService {
         return carRepository.findByYearBetween(startYear, endYear);
     }
 
-    // Dodatkowe metody dla statusów
     public List<Car> getCarsByStatus(Car.Status status) {
         return carRepository.findByStatus(status);
     }
 
-    // ✅ POBIERZ AUTA MANAGERA - dla specific managera
     public List<Car> getCarsByManager(User manager) {
         return carRepository.findByManager(manager);
     }
 
-    // ✅ POBIERZ DOSTĘPNE AUTA MANAGERA
     public List<Car> getAvailableCarsByManager(User manager) {
         return carRepository.findByManagerAndStatus(manager, Car.Status.AVAILABLE);
     }
