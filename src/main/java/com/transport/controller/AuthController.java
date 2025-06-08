@@ -87,8 +87,16 @@ public class AuthController {
 
     @GetMapping("/verify")
     public String verifyUser(@RequestParam("token") String token, Model model) {
-        userService.verifyUser(token);
-        model.addAttribute("message", "Account verified successfully! You can now login.");
+        boolean isVerified = userService.verifyUser(token);
+
+        if (isVerified) {
+            model.addAttribute("message", "Account verified successfully! You can now login.");
+            model.addAttribute("messageType", "success");
+        } else {
+            model.addAttribute("message", "Invalid or expired verification token. Please try registering again.");
+            model.addAttribute("messageType", "error");
+        }
+
         return "login";
     }
 }

@@ -23,7 +23,7 @@ public class EmailService {
         message.setSubject("Account Verification - Car Rental System");
         message.setText("Dear " + user.getFirstName() + ",\n\n" +
                 "Please click the following link to verify your account:\n" +
-                "http://localhost:8080/car-rental/verify?token=" + token + "\n\n" +
+                "http://localhost:8080/verify?token=" + token + "\n\n" +
                 "This link will expire in 24 hours.\n\n" +
                 "Best regards,\nCar Rental Team");
 

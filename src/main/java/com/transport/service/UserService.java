@@ -93,14 +93,16 @@ public class UserService {
         return userRepository.countCustomersByManagerId(managerId);
     }
 
-    public void verifyUser(String token) {
+    public boolean verifyUser(String token) {
         VerificationToken verificationToken = tokenRepository.findByToken(token);
         if (verificationToken != null && !verificationToken.isExpired()) {
             User user = verificationToken.getUser();
             user.setEnabled(true);
             userRepository.save(user);
             tokenRepository.delete(verificationToken);
+            return true;  // ✅ Zwróć true jeśli weryfikacja się powiodła
         }
+        return false;  // ✅ Zwróć false jeśli token nieprawidłowy lub wygasł
     }
 
     public User findByUsername(String username) {

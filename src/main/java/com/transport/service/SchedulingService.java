@@ -21,7 +21,7 @@ public class SchedulingService {
     public void cancelUnpaidBookings() {
         LocalDateTime now = LocalDateTime.now();
         List<Booking> unpaidBookings = bookingRepository
-                .findByStatusAndPaymentDeadlineBefore(Booking.Status.PENDING, now);
+                .findByStatusAndPaymentDeadlineBefore(Booking.Status.CONFIRMED, now);
 
         for (Booking booking : unpaidBookings) {
             booking.setStatus(Booking.Status.CANCELLED);
