@@ -112,13 +112,28 @@ mvn clean package
 
 The application will be available at `http://localhost:8080`.
 
-## Default Roles
+## First Run Setup
 
-On first run, seed the `roles` table:
+### 1. Seed roles
 
 ```sql
 INSERT INTO roles (name) VALUES ('ROLE_ADMIN'), ('ROLE_MANAGER'), ('ROLE_CUSTOMER');
 ```
+
+### 2. Create admin user
+
+Registration via the form creates `ROLE_CUSTOMER` only. Insert an admin manually:
+
+```sql
+INSERT INTO users (username, email, password, first_name, last_name, enabled)
+VALUES ('admin', 'admin@example.com', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'Admin', 'Admin', true);
+
+INSERT INTO user_roles (user_id, role_id)
+SELECT u.id, r.id FROM users u, roles r
+WHERE u.username = 'admin' AND r.name = 'ROLE_ADMIN';
+```
+
+This creates an admin with password `admin`. Change it after first login.
 
 ---
 
