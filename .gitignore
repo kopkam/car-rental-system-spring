@@ -1,0 +1,20 @@
+# Build output
+target/
+*.class
+*.war
+*.jar
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# Application YOUR_DB_PASSWORDs - copy application.properties.example and fill in your values
+src/main/resources/application.properties
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Uploads
+uploads/
