@@ -87,16 +87,20 @@ Edit `src/main/resources/application.properties`:
 
 ```properties
 # Database
-db.url=jdbc:postgresql://localhost:5432/car_rental
-db.username=postgres
-db.password=your_password
+spring.datasource.url=jdbc:postgresql://localhost:5432/car_rental
+spring.datasource.username=postgres
+spring.datasource.password=your_password
 
 # Email (Gmail App Password)
-mail.username=your@gmail.com
-mail.password=your_app_password
+spring.mail.username=your@gmail.com
+spring.mail.password=your_app_password
 
 # File uploads
-upload.dir=/path/to/uploads/cars
+app.upload.dir=uploads/cars
+
+# Google reCAPTCHA (https://www.google.com/recaptcha/admin)
+google.recaptcha.site-key=your_recaptcha_site_key
+google.recaptcha.secret-key=your_recaptcha_secret_key
 ```
 
 ### Build & Run
