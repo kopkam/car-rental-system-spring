@@ -20,7 +20,8 @@ import java.nio.file.Paths;
 @RequestMapping("/images")
 public class ImageController {
 
-    private static final String UPLOAD_DIR = "C:/WPFAT_project/Projekt/uploads/cars/";
+    @Value("${app.upload.dir}")
+    private String UPLOAD_DIR;
 
     @GetMapping("/cars/{filename:.+}")
     public ResponseEntity<Resource> getCarImage(@PathVariable String filename) {
